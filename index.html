@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勤務時間管理</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+
+  header {
+    background: #2d3748;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  #clock { font-size: 22px; font-weight: 700; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+
+  nav {
+    background: white;
+    display: flex;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 0 24px;
+  }
+  nav button {
+    padding: 14px 24px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #718096;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+  }
+  nav button.active { color: #4299e1; border-bottom-color: #4299e1; }
+  nav button:hover:not(.active) { color: #2d3748; }
+
+  .tab { display: none; padding: 24px; max-width: 800px; margin: 0 auto; }
+  .tab.active { display: block; }
+
+  /* 打刻タブ */
+  .punch-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+  }
+  .punch-card h2 { font-size: 15px; color: #718096; margin-bottom: 8px; }
+  .punch-card .today { font-size: 28px; font-weight: 700; margin-bottom: 24px; color: #2d3748; }
+
+  .punch-buttons { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; }
+  .btn-in, .btn-out {
+    padding: 16px 40px;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 140px;
+  }
+  .btn-in { background: #48bb78; color: white; }
+  .btn-in:hover { background: #38a169; transform: translateY(-1px); }
+  .btn-in:disabled { background: #c6f6d5; cursor: default; transform: none; }
+  .btn-out { background: #fc8181; color: white; }
+  .btn-out:hover { background: #f56565; transform: translateY(-1px); }
+  .btn-out:disabled { background: #fed7d7; cursor: default; transform: none; }
+
+  .punch-status { font-size: 14px; color: #4a5568; background: #f7fafc; border-radius: 8px; padding: 12px 20px; }
+  .punch-status span { font-weight: 700; color: #2d3748; }
+
+  .records-section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .records-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #2d3748; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: #718096; font-weight: 600; padding: 8px 12px; border-bottom: 2px solid #e2e8f0; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0f4f8; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7fafc; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-green { background: #c6f6d5; color: #276749; }
+  .badge-red { background: #fed7d7; color: #9b2c2c; }
+  .badge-blue { background: #bee3f8; color: #2c5282; }
+
+  /* シフトタブ */
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+  }
+  .form-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 18px; color: #2d3748; }
+  .form-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: #718096; }
+  .form-group input, .form-group select {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66,153,225,0.15); }
+  .form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .form-group textarea:focus { border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66,153,225,0.15); }
+
+  .btn-primary {
+    padding: 10px 24px;
+    background: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #3182ce; }
+
+  .btn-danger {
+    padding: 6px 14px;
+    background: none;
+    border: 1px solid #fc8181;
+    color: #e53e3e;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-danger:hover { background: #fff5f5; }
+
+  .empty-msg { text-align: center; color: #a0aec0; padding: 32px; font-size: 14px; }
+
+  /* 集計タブ */
+  .summary-header { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .summary-header select {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-box {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .stat-box .label { font-size: 12px; color: #718096; font-weight: 600; margin-bottom: 8px; }
+  .stat-box .value { font-size: 26px; font-weight: 700; color: #2d3748; font-variant-numeric: tabular-nums; }
+  .stat-box .unit { font-size: 13px; color: #718096; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #2d3748;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* 年間集計 */
+  .bar-chart { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
+  .bar-chart h3 { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: #2d3748; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .bar-month { width: 32px; font-size: 12px; color: #718096; font-weight: 600; text-align: right; flex-shrink: 0; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .bar-track { background: #f0f4f8; border-radius: 4px; height: 12px; position: relative; overflow: visible; }
+  .bar-fill-actual { height: 100%; border-radius: 4px; background: #4299e1; transition: width 0.4s; min-width: 2px; }
+  .bar-fill-planned { height: 100%; border-radius: 4px; background: #e2e8f0; transition: width 0.4s; min-width: 2px; }
+  .bar-label { font-size: 11px; color: #4a5568; white-space: nowrap; }
+  .bar-legend { display: flex; gap: 16px; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    .punch-buttons { flex-direction: column; align-items: center; }
+    .btn-in, .btn-out { width: 100%; max-width: 280px; }
+    .form-row { flex-direction: column; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>勤務時間管理</h1>
+  <div id="clock">--:--</div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('punch')">打刻</button>
+  <button onclick="switchTab('shift')">シフト</button>
+  <button onclick="switchTab('summary')">月次集計</button>
+  <button onclick="switchTab('annual')">年間集計</button>
+</nav>
+
+<!-- 打刻タブ -->
+<div id="tab-punch" class="tab active">
+  <div class="punch-card">
+    <h2>本日の日付</h2>
+    <div class="today" id="today-date">--</div>
+    <div class="punch-buttons">
+      <button class="btn-in" id="btn-in" onclick="punchIn()">出勤</button>
+      <button class="btn-out" id="btn-out" onclick="punchOut()">退勤</button>
+    </div>
+    <div class="punch-status" id="punch-status">ステータスを読み込み中...</div>
+  </div>
+
+  <div class="records-section">
+    <h3>打刻記録</h3>
+    <div id="punch-records-container">
+      <p class="empty-msg">記録がありません</p>
+    </div>
+  </div>
+</div>
+
+<!-- シフトタブ -->
+<div id="tab-shift" class="tab">
+  <div class="form-card">
+    <h3>シフトを追加</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>日付</label>
+        <input type="date" id="shift-date">
+      </div>
+      <div class="form-group">
+        <label>開始時刻</label>
+        <input type="time" id="shift-start">
+      </div>
+      <div class="form-group">
+        <label>終了時刻</label>
+        <input type="time" id="shift-end">
+      </div>
+      <div class="form-group">
+        <label>休憩 (分)</label>
+        <input type="number" id="shift-break" value="60" min="0" max="480" step="5">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:3">
+        <label>メモ</label>
+        <textarea id="shift-memo" rows="2" placeholder="任意"></textarea>
+      </div>
+      <div class="form-group" style="justify-content:flex-end">
+        <button class="btn-primary" onclick="addShift()">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="records-section">
+    <h3>シフト一覧</h3>
+    <div id="shift-list-container">
+      <p class="empty-msg">シフトがありません</p>
+    </div>
+  </div>
+</div>
+
+<!-- 集計タブ -->
+<div id="tab-summary" class="tab">
+  <div class="summary-header">
+    <select id="summary-month" onchange="renderSummary()"></select>
+    <button class="btn-primary" onclick="exportCSV()">CSV出力</button>
+  </div>
+
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-box"><div class="label">実労働時間</div><div class="value" id="stat-actual">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">予定時間</div><div class="value" id="stat-planned">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">出勤日数</div><div class="value" id="stat-days">--</div><div class="unit">日</div></div>
+    <div class="stat-box"><div class="label">平均勤務時間</div><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div>
+  </div>
+
+  <div class="records-section">
+    <h3>日別明細</h3>
+    <div id="summary-table-container">
+      <p class="empty-msg">データがありません</p>
+    </div>
+  </div>
+</div>
+
+<!-- 年間集計タブ -->
+<div id="tab-annual" class="tab">
+  <div class="summary-header">
+    <select id="annual-year" onchange="renderAnnual()"></select>
+    <button class="btn-primary" onclick="exportAnnualCSV()">CSV出力</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value" id="ann-actual">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">年間予定時間</div><div class="value" id="ann-planned">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">年間出勤日数</div><div class="value" id="ann-days">--</div><div class="unit">日</div></div>
+    <div class="stat-box"><div class="label">月平均実働</div><div class="value" id="ann-avg">--</div><div class="unit">時間/月</div></div>
+  </div>
+
+  <div class="bar-chart">
+    <h3>月別勤務時間グラフ</h3>
+    <div class="bar-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4299e1"></div>実労働</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0;border:1px solid #cbd5e0"></div>予定</div>
+    </div>
+    <div id="annual-chart"></div>
+  </div>
+
+  <div class="records-section">
+    <h3>月別明細</h3>
+    <div id="annual-table-container">
+      <p class="empty-msg">データがありません</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- データ管理 ----
+const DB = {
+  get punches() { return JSON.parse(localStorage.getItem('wt_punches') || '[]'); },
+  set punches(v) { localStorage.setItem('wt_punches', JSON.stringify(v)); },
+  get shifts() { return JSON.parse(localStorage.getItem('wt_shifts') || '[]'); },
+  set shifts(v) { localStorage.setItem('wt_shifts', JSON.stringify(v)); },
+};
+
+// ---- ユーティリティ ----
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`; }
+function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function minutesToHM(m) {
+  const h = Math.floor(Math.abs(m) / 60);
+  const min = Math.abs(m) % 60;
+  const sign = m < 0 ? '-' : '';
+  return `${sign}${h}:${pad(min)}`;
+}
+function minutesToH(m) {
+  return (m / 60).toFixed(1);
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ---- 時計 ----
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = fmtTime(now);
+  document.getElementById('today-date').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 (${['日','月','火','水','木','金','土'][now.getDay()]})`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---- タブ切替 ----
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'summary') renderSummary();
+  if (name === 'annual') renderAnnual();
+}
+
+// ---- 打刻 ----
+function getTodayPunch() {
+  const today = todayStr();
+  return DB.punches.find(p => p.date === today);
+}
+
+function refreshPunchUI() {
+  const punch = getTodayPunch();
+  const btnIn = document.getElementById('btn-in');
+  const btnOut = document.getElementById('btn-out');
+  const status = document.getElementById('punch-status');
+
+  if (!punch) {
+    btnIn.disabled = false;
+    btnOut.disabled = true;
+    status.innerHTML = '本日の打刻はまだありません';
+  } else if (punch.in && !punch.out) {
+    btnIn.disabled = true;
+    btnOut.disabled = false;
+    status.innerHTML = `出勤打刻済み: <span>${punch.in}</span>`;
+  } else if (punch.in && punch.out) {
+    btnIn.disabled = true;
+    btnOut.disabled = true;
+    const mins = calcPunchMinutes(punch);
+    status.innerHTML = `出勤 <span>${punch.in}</span> → 退勤 <span>${punch.out}</span>　実働 <span>${minutesToHM(mins)}</span>`;
+  }
+  renderPunchRecords();
+}
+
+function calcPunchMinutes(punch) {
+  if (!punch.in || !punch.out) return 0;
+  const [ih, im] = punch.in.split(':').map(Number);
+  const [oh, om] = punch.out.split(':').map(Number);
+  return (oh * 60 + om) - (ih * 60 + im);
+}
+
+function punchIn() {
+  const now = new Date();
+  const today = todayStr();
+  const punches = DB.punches;
+  const existing = punches.find(p => p.date === today);
+  if (existing) return;
+  punches.push({ date: today, in: fmtTime(now), out: null });
+  DB.punches = punches;
+  showToast(`出勤打刻しました: ${fmtTime(now)}`);
+  refreshPunchUI();
+}
+
+function punchOut() {
+  const now = new Date();
+  const today = todayStr();
+  const punches = DB.punches;
+  const punch = punches.find(p => p.date === today);
+  if (!punch || punch.out) return;
+  punch.out = fmtTime(now);
+  DB.punches = punches;
+  showToast(`退勤打刻しました: ${fmtTime(now)}`);
+  refreshPunchUI();
+}
+
+function deletePunch(date) {
+  if (!confirm(`${date} の打刻を削除しますか？`)) return;
+  DB.punches = DB.punches.filter(p => p.date !== date);
+  refreshPunchUI();
+  showToast('削除しました');
+}
+
+function renderPunchRecords() {
+  const container = document.getElementById('punch-records-container');
+  const punches = [...DB.punches].sort((a, b) => b.date.localeCompare(a.date));
+  if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th></th></tr></thead><tbody>`;
+  for (const p of punches) {
+    const mins = calcPunchMinutes(p);
+    const [y, m, d] = p.date.split('-');
+    const dateStr = `${y}/${m}/${d}`;
+    const statusBadge = p.out
+      ? `<span class="badge badge-blue">${minutesToHM(mins)}</span>`
+      : `<span class="badge badge-green">勤務中</span>`;
+    html += `<tr>
+      <td>${dateStr}</td>
+      <td>${p.in ?? '-'}</td>
+      <td>${p.out ?? '-'}</td>
+      <td>${statusBadge}</td>
+      <td><button class="btn-danger" onclick="deletePunch('${p.date}')">削除</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ---- シフト ----
+function addShift() {
+  const date = document.getElementById('shift-date').value;
+  const start = document.getElementById('shift-start').value;
+  const end = document.getElementById('shift-end').value;
+  const brk = parseInt(document.getElementById('shift-break').value) || 0;
+  const memo = document.getElementById('shift-memo').value.trim();
+
+  if (!date || !start || !end) { showToast('日付・開始・終了を入力してください'); return; }
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const totalMins = (eh * 60 + em) - (sh * 60 + sm);
+  if (totalMins <= 0) { showToast('終了時刻は開始より後にしてください'); return; }
+  const workMins = totalMins - brk;
+
+  const shifts = DB.shifts;
+  shifts.push({ id: Date.now(), date, start, end, break: brk, work: workMins, memo });
+  DB.shifts = shifts;
+  showToast('シフトを追加しました');
+  document.getElementById('shift-memo').value = '';
+  renderShiftList();
+}
+
+function deleteShift(id) {
+  if (!confirm('このシフトを削除しますか？')) return;
+  DB.shifts = DB.shifts.filter(s => s.id !== id);
+  renderShiftList();
+  showToast('削除しました');
+}
+
+function renderShiftList() {
+  const container = document.getElementById('shift-list-container');
+  const shifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
+  if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
+  let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th>実働</th><th>メモ</th><th></th></tr></thead><tbody>`;
+  for (const s of shifts) {
+    const [y, m, d] = s.date.split('-');
+    html += `<tr>
+      <td>${y}/${m}/${d}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td>${s.break}分</td>
+      <td><span class="badge badge-blue">${minutesToHM(s.work)}</span></td>
+      <td style="color:#718096;font-size:13px">${s.memo || '-'}</td>
+      <td><button class="btn-danger" onclick="deleteShift(${s.id})">削除</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ---- 月次集計 ----
+function initMonthSelector() {
+  const sel = document.getElementById('summary-month');
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+    const label = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = label;
+    sel.appendChild(opt);
+  }
+}
+
+function renderSummary() {
+  const ym = document.getElementById('summary-month').value;
+  const [y, m] = ym.split('-').map(Number);
+
+  const punches = DB.punches.filter(p => p.date.startsWith(ym));
+  const shifts = DB.shifts.filter(s => s.date.startsWith(ym));
+
+  // 日付マップ
+  const days = {};
+  for (const p of punches) {
+    if (!days[p.date]) days[p.date] = {};
+    days[p.date].punch = p;
+  }
+  for (const s of shifts) {
+    if (!days[s.date]) days[s.date] = {};
+    if (!days[s.date].shifts) days[s.date].shifts = [];
+    days[s.date].shifts.push(s);
+  }
+
+  const sortedDates = Object.keys(days).sort();
+
+  let totalActual = 0, totalPlanned = 0, workedDays = 0;
+  for (const date of sortedDates) {
+    const d = days[date];
+    const actualMins = d.punch ? calcPunchMinutes(d.punch) : 0;
+    const plannedMins = d.shifts ? d.shifts.reduce((a, s) => a + s.work, 0) : 0;
+    if (actualMins > 0) { totalActual += actualMins; workedDays++; }
+    totalPlanned += plannedMins;
+  }
+
+  document.getElementById('stat-actual').textContent = minutesToH(totalActual);
+  document.getElementById('stat-planned').textContent = minutesToH(totalPlanned);
+  document.getElementById('stat-days').textContent = workedDays;
+  document.getElementById('stat-avg').textContent = workedDays > 0 ? (totalActual / 60 / workedDays).toFixed(1) : '0.0';
+
+  const container = document.getElementById('summary-table-container');
+  if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
+
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th></tr></thead><tbody>`;
+  for (const date of sortedDates) {
+    const d = days[date];
+    const p = d.punch;
+    const actualMins = p ? calcPunchMinutes(p) : 0;
+    const plannedMins = d.shifts ? d.shifts.reduce((a, s) => a + s.work, 0) : 0;
+    const diff = actualMins - plannedMins;
+    const [dy, dm, dd] = date.split('-');
+    const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
+    const diffStr = diff === 0 ? '-' :
+      `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
+    html += `<tr>
+      <td>${dy}/${dm}/${dd} (${dow})</td>
+      <td>${p?.in ?? '-'}</td>
+      <td>${p?.out ?? '-'}</td>
+      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
+      <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
+      <td>${diffStr}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ---- CSV出力 ----
+function exportCSV() {
+  const ym = document.getElementById('summary-month').value;
+  const punches = DB.punches.filter(p => p.date.startsWith(ym));
+  const shifts = DB.shifts.filter(s => s.date.startsWith(ym));
+
+  const days = {};
+  for (const p of punches) { days[p.date] = { ...days[p.date], punch: p }; }
+  for (const s of shifts) {
+    if (!days[s.date]) days[s.date] = {};
+    if (!days[s.date].shifts) days[s.date].shifts = [];
+    days[s.date].shifts.push(s);
+  }
+
+  let csv = '日付,出勤,退勤,実働時間,予定時間,差分\n';
+  for (const date of Object.keys(days).sort()) {
+    const d = days[date];
+    const p = d.punch;
+    const actualMins = p ? calcPunchMinutes(p) : 0;
+    const plannedMins = d.shifts ? d.shifts.reduce((a, s) => a + s.work, 0) : 0;
+    const diff = actualMins - plannedMins;
+    csv += `${date},${p?.in??''},${p?.out??''},${minutesToHM(actualMins)},${minutesToHM(plannedMins)},${minutesToHM(diff)}\n`;
+  }
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `勤務記録_${ym}.csv`;
+  a.click();
+  showToast('CSVを出力しました');
+}
+
+// ---- 年間集計 ----
+function initYearSelector() {
+  const sel = document.getElementById('annual-year');
+  const now = new Date();
+  for (let i = 0; i < 5; i++) {
+    const y = now.getFullYear() - i;
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y}年`;
+    sel.appendChild(opt);
+  }
+}
+
+function getMonthData(ym) {
+  const punches = DB.punches.filter(p => p.date.startsWith(ym));
+  const shifts = DB.shifts.filter(s => s.date.startsWith(ym));
+  let actualMins = 0, plannedMins = 0, workedDays = 0;
+  const dateSet = new Set([...punches.map(p => p.date), ...shifts.map(s => s.date)]);
+  for (const date of dateSet) {
+    const p = punches.find(x => x.date === date);
+    const ss = shifts.filter(x => x.date === date);
+    const a = p ? calcPunchMinutes(p) : 0;
+    const pl = ss.reduce((acc, s) => acc + s.work, 0);
+    if (a > 0) { actualMins += a; workedDays++; }
+    plannedMins += pl;
+  }
+  return { actualMins, plannedMins, workedDays };
+}
+
+function renderAnnual() {
+  const year = document.getElementById('annual-year').value;
+  let totalActual = 0, totalPlanned = 0, totalDays = 0;
+  const months = [];
+
+  for (let m = 1; m <= 12; m++) {
+    const ym = `${year}-${pad(m)}`;
+    const data = getMonthData(ym);
+    months.push({ m, ym, ...data });
+    totalActual += data.actualMins;
+    totalPlanned += data.plannedMins;
+    totalDays += data.workedDays;
+  }
+
+  document.getElementById('ann-actual').textContent = minutesToH(totalActual);
+  document.getElementById('ann-planned').textContent = minutesToH(totalPlanned);
+  document.getElementById('ann-days').textContent = totalDays;
+  const activeMonths = months.filter(m => m.actualMins > 0).length;
+  document.getElementById('ann-avg').textContent = activeMonths > 0 ? (totalActual / 60 / activeMonths).toFixed(1) : '0.0';
+
+  // バーチャート
+  const maxMins = Math.max(...months.map(m => Math.max(m.actualMins, m.plannedMins)), 1);
+  const chart = document.getElementById('annual-chart');
+  chart.innerHTML = months.map(({ m, actualMins, plannedMins }) => {
+    const aW = (actualMins / maxMins * 100).toFixed(1);
+    const pW = (plannedMins / maxMins * 100).toFixed(1);
+    return `<div class="bar-row">
+      <div class="bar-month">${m}月</div>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-fill-actual" style="width:${aW}%"></div></div>
+        <div class="bar-track"><div class="bar-fill-planned" style="width:${pW}%"></div></div>
+      </div>
+      <div class="bar-label">${actualMins ? minutesToH(actualMins)+'h' : '-'} / ${plannedMins ? minutesToH(plannedMins)+'h' : '-'}</div>
+    </div>`;
+  }).join('');
+
+  // 月別テーブル
+  const container = document.getElementById('annual-table-container');
+  const hasData = months.some(m => m.actualMins > 0 || m.plannedMins > 0);
+  if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
+
+  let html = `<table><thead><tr><th>月</th><th>実労働時間</th><th>予定時間</th><th>差分</th><th>出勤日数</th></tr></thead><tbody>`;
+  for (const { m, actualMins, plannedMins, workedDays } of months) {
+    const diff = actualMins - plannedMins;
+    const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
+      diff === 0 ? '±0:00' :
+      `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
+    html += `<tr>
+      <td>${year}/${pad(m)}</td>
+      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
+      <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
+      <td>${diffStr}</td>
+      <td>${workedDays > 0 ? workedDays+'日' : '-'}</td>
+    </tr>`;
+  }
+  // 合計行
+  const totalDiff = totalActual - totalPlanned;
+  const totalDiffStr = totalDiff === 0 ? '±0:00' :
+    `<span style="color:${totalDiff>0?'#276749':'#c53030'};font-weight:600">${totalDiff>0?'+':''}${minutesToHM(totalDiff)}</span>`;
+  html += `<tr style="font-weight:700;background:#f7fafc">
+    <td>合計</td>
+    <td>${minutesToHM(totalActual)}</td>
+    <td>${minutesToHM(totalPlanned)}</td>
+    <td>${totalDiffStr}</td>
+    <td>${totalDays}日</td>
+  </tr>`;
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function exportAnnualCSV() {
+  const year = document.getElementById('annual-year').value;
+  let csv = '月,実労働時間,予定時間,差分,出勤日数\n';
+  for (let m = 1; m <= 12; m++) {
+    const ym = `${year}-${pad(m)}`;
+    const { actualMins, plannedMins, workedDays } = getMonthData(ym);
+    const diff = actualMins - plannedMins;
+    csv += `${year}/${pad(m)},${minutesToHM(actualMins)},${minutesToHM(plannedMins)},${minutesToHM(diff)},${workedDays}\n`;
+  }
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `年間勤務記録_${year}.csv`;
+  a.click();
+  showToast('CSVを出力しました');
+}
+
+// ---- 初期化 ----
+// シフト入力のデフォルト日付
+document.getElementById('shift-date').value = todayStr();
+
+initMonthSelector();
+initYearSelector();
+refreshPunchUI();
+renderShiftList();
+</script>
+</body>
+</html>
