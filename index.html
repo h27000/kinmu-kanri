@@ -300,15 +300,39 @@
   <!-- 時給設定 -->
   <div class="card">
     <h3>時給設定</h3>
-    <div class="wage-setting">
-      <label>時給</label>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:15px;color:#4a5568">¥</span>
-        <input type="number" id="hourly-rate" min="0" max="99999" step="10" placeholder="1000" oninput="saveWage()">
-        <span style="font-size:13px;color:#718096">/ 時間</span>
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- 基本時給 -->
+      <div>
+        <div style="font-size:12px;color:#718096;margin-bottom:6px">基本時給（月別設定がない月に使用）</div>
+        <div class="wage-setting" style="margin:0">
+          <label>時給</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px;color:#4a5568">¥</span>
+            <input type="number" id="hourly-rate" min="0" max="99999" step="10" placeholder="1000" oninput="saveWage()">
+            <span style="font-size:13px;color:#718096">/ 時間</span>
+          </div>
+        </div>
+        <div class="wage-display" id="wage-display"></div>
+        <div style="font-size:12px;color:#4299e1;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
       </div>
+
+      <!-- 月別時給 -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+        <div style="font-size:13px;font-weight:600;color:#2d3748;margin-bottom:8px">📅 月別時給設定</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="month" id="wage-month" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:14px;color:#4a5568">¥</span>
+            <input type="number" id="wage-month-rate" min="0" max="99999" step="10" placeholder="1000"
+              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+          </div>
+          <button class="btn-primary" onclick="saveMonthlyRate()" style="white-space:nowrap">設定</button>
+        </div>
+        <div id="monthly-rates-list" style="margin-top:10px"></div>
+      </div>
+
     </div>
-    <div class="wage-display" id="wage-display"></div>
   </div>
 
   <!-- クラウド同期 -->
@@ -488,8 +512,18 @@ const DB = {
   set punches(v) { localStorage.setItem('wt_punches', JSON.stringify(v)); },
   get shifts() { return JSON.parse(localStorage.getItem('wt_shifts') || '[]'); },
   set shifts(v) { localStorage.setItem('wt_shifts', JSON.stringify(v)); },
+  // 基本時給（デフォルト）
   get hourlyRate() { return parseInt(localStorage.getItem('wt_hourly_rate') || '0'); },
   set hourlyRate(v) { localStorage.setItem('wt_hourly_rate', String(v)); },
+  // 月別時給 { "2026-01": 1100, "2026-03": 1200, ... }
+  get hourlyRates() { return JSON.parse(localStorage.getItem('wt_hourly_rates') || '{}'); },
+  set hourlyRates(v) { localStorage.setItem('wt_hourly_rates', JSON.stringify(v)); },
+  // ym (例: "2026-04") の時給を返す。月別設定 → 基本時給 の順でフォールバック
+  getRate(ym) {
+    if (!ym) return this.hourlyRate;
+    const rates = this.hourlyRates;
+    return rates[ym] ?? this.hourlyRate;
+  },
 };
 
 // ---- クラウド同期 (JSONBin.io) ----
@@ -532,6 +566,7 @@ const SYNC = {
       if (Array.isArray(data.punches)) localStorage.setItem('wt_punches', JSON.stringify(data.punches));
       if (Array.isArray(data.shifts))  localStorage.setItem('wt_shifts',  JSON.stringify(data.shifts));
       if (data.hourlyRate !== undefined) localStorage.setItem('wt_hourly_rate', String(data.hourlyRate));
+      if (data.hourlyRates && typeof data.hourlyRates === 'object') localStorage.setItem('wt_hourly_rates', JSON.stringify(data.hourlyRates));
       return true;
     } catch(e) { console.warn('pull failed:', e); return false; }
   },
@@ -543,7 +578,7 @@ const SYNC = {
     fetch(`${this.BASE}/${this.bin}`, {
       method: 'PUT',
       headers: this.headers(),
-      body: JSON.stringify({ punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate }),
+      body: JSON.stringify({ punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates }),
     }).catch(e => console.warn('push failed:', e));
   },
 };
@@ -561,10 +596,14 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
-function calcWage(mins) {
-  const rate = DB.hourlyRate;
+// ym = "2026-04" 形式。省略時はデフォルト時給を使用
+function calcWage(mins, ym) {
+  const rate = ym ? DB.getRate(ym) : DB.hourlyRate;
   if (!rate || mins <= 0) return null;
-  return Math.floor(mins / 60 * rate);
+  const OVERTIME_THRESHOLD = 480; // 8時間 = 480分
+  const normalMins = Math.min(mins, OVERTIME_THRESHOLD);
+  const overMins   = Math.max(0, mins - OVERTIME_THRESHOLD);
+  return Math.floor(normalMins / 60 * rate + overMins / 60 * rate * 1.25);
 }
 function fmtWage(yen) {
   if (yen === null) return '-';
@@ -609,7 +648,62 @@ function saveWage() {
 function updateWageDisplay() {
   const rate = DB.hourlyRate;
   const disp = document.getElementById('wage-display');
-  disp.textContent = rate ? `8時間勤務の場合: ${fmtWage(rate * 8)}` : '';
+  if (rate) {
+    const normal = fmtWage(rate * 8);
+    const over1h = fmtWage(Math.floor(rate * 1.25));
+    disp.textContent = `8h勤務: ${normal}　残業1hあたり: ${over1h}`;
+  } else {
+    disp.textContent = '';
+  }
+  renderMonthlyRatesList();
+}
+
+// ---- 月別時給 ----
+function saveMonthlyRate() {
+  const month = document.getElementById('wage-month').value;  // "2026-04"
+  const rate  = parseInt(document.getElementById('wage-month-rate').value) || 0;
+  if (!month) { showToast('月を選択してください'); return; }
+  const rates = DB.hourlyRates;
+  if (rate) {
+    rates[month] = rate;
+  } else {
+    delete rates[month]; // 0または空欄で削除
+  }
+  DB.hourlyRates = rates;
+  SYNC.push();
+  document.getElementById('wage-month-rate').value = '';
+  renderMonthlyRatesList();
+  renderPunchRecords();
+  showToast(rate ? `${month} の時給を ¥${rate.toLocaleString()} に設定しました` : `${month} の月別設定を削除しました`);
+}
+
+function deleteMonthlyRate(month) {
+  const rates = DB.hourlyRates;
+  delete rates[month];
+  DB.hourlyRates = rates;
+  SYNC.push();
+  renderMonthlyRatesList();
+  renderPunchRecords();
+  showToast(`${month} の月別設定を削除しました`);
+}
+
+function renderMonthlyRatesList() {
+  const container = document.getElementById('monthly-rates-list');
+  if (!container) return;
+  const rates = DB.hourlyRates;
+  const entries = Object.entries(rates).sort((a, b) => b[0].localeCompare(a[0]));
+  if (!entries.length) {
+    container.innerHTML = '<div style="font-size:12px;color:#a0aec0">月別設定なし（基本時給を使用）</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([ym, rate]) => {
+    const [y, m] = ym.split('-');
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:13px">
+      <span style="font-weight:600;color:#2d3748">${y}年${parseInt(m)}月</span>
+      <span style="color:#4a5568">¥${rate.toLocaleString()} / 時間</span>
+      <button onclick="deleteMonthlyRate('${ym}')" style="padding:3px 8px;background:#fff5f5;border:1px solid #fc8181;color:#c53030;border-radius:6px;font-size:11px;cursor:pointer">削除</button>
+    </div>`;
+  }).join('');
 }
 
 // ---- クラウド同期 UI ----
@@ -712,7 +806,7 @@ function refreshPunchUI() {
   } else {
     btnIn.disabled = true; btnOut.disabled = true;
     const mins = calcPunchMinutes(punch);
-    const wage = calcWage(mins);
+    const wage = calcWage(mins, punch.date.substring(0, 7));
     status.innerHTML = `出勤 <span>${punch.in}</span> → 退勤 <span>${punch.out}</span>　実働 <span>${minutesToHM(mins)}</span>${wage !== null ? `　給与 <span>${fmtWage(wage)}</span>` : ''}`;
   }
   renderPunchRecords();
@@ -832,7 +926,8 @@ function renderPunchRecords() {
     const mins = calcPunchMinutes(p);
     const [y, m, d] = p.date.split('-');
     const dateStr = `${y}/${m}/${d}`;
-    const wage = calcWage(mins);
+    const ym = `${y}-${m}`;
+    const wage = calcWage(mins, ym);
 
     if (editingDate === p.date) {
       // 編集行（2行で表示: 1行目=日付・出退勤、2行目=休憩）
@@ -968,7 +1063,17 @@ function renderSummary() {
     if (actual > 0) { totalActual += actual; workedDays++; }
     totalPlanned += planned;
   }
-  const totalWage = calcWage(totalActual);
+  // 月次合計給与: 日毎に計算して合算（月別時給・残業割増を正確に反映）
+  const totalWage = (() => {
+    let sum = 0; let hasRate = false;
+    for (const date of sortedDates) {
+      const p = days[date].punch;
+      if (!p) continue;
+      const w = calcWage(calcPunchMinutes(p), date.substring(0, 7));
+      if (w !== null) { sum += w; hasRate = true; }
+    }
+    return hasRate ? sum : null;
+  })();
 
   document.getElementById('stat-actual').textContent  = minutesToH(totalActual);
   document.getElementById('stat-planned').textContent = minutesToH(totalPlanned);
@@ -979,7 +1084,7 @@ function renderSummary() {
   const container = document.getElementById('summary-table-container');
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
-  const hasWage = DB.hourlyRate > 0;
+  const hasWage = DB.getRate(ym) > 0;
   let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
@@ -990,7 +1095,7 @@ function renderSummary() {
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
     const diffStr = diff === 0 ? '-' :
       `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
-    const wage = calcWage(actualMins);
+    const wage = calcWage(actualMins, date.substring(0, 7));
     html += `<tr>
       <td>${dy}/${dm}/${dd}(${dow})</td>
       <td>${p?.in ?? '-'}</td>
@@ -1021,7 +1126,7 @@ function exportCSV() {
     const p = days[date].punch;
     const actual  = p ? calcPunchMinutes(p) : 0;
     const planned = (days[date].shifts || []).reduce((a, s) => a + s.work, 0);
-    const wage = calcWage(actual);
+    const wage = calcWage(actual, date.substring(0, 7));
     csv += `${date},${p?.in??''},${p?.out??''},${minutesToHM(actual)},${minutesToHM(planned)},${minutesToHM(actual-planned)},${wage ?? ''}\n`;
   }
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -1072,7 +1177,15 @@ function renderAnnual() {
     totalPlanned += data.plannedMins;
     totalDays += data.workedDays;
   }
-  const totalWage = calcWage(totalActual);
+  // 年間合計給与: 月ごとに正確に計算して合算
+  const totalWage = (() => {
+    let sum = 0; let hasRate = false;
+    for (const { ym: mym, actualMins } of months) {
+      const w = calcWage(actualMins, mym);
+      if (w !== null) { sum += w; hasRate = true; }
+    }
+    return hasRate ? sum : null;
+  })();
   const activeMonths = months.filter(m => m.actualMins > 0).length;
 
   document.getElementById('ann-actual').textContent  = minutesToH(totalActual);
@@ -1083,10 +1196,10 @@ function renderAnnual() {
 
   // バーチャート
   const maxMins = Math.max(...months.map(m => Math.max(m.actualMins, m.plannedMins)), 1);
-  document.getElementById('annual-chart').innerHTML = months.map(({ m, actualMins, plannedMins }) => {
+  document.getElementById('annual-chart').innerHTML = months.map(({ m, ym: mym, actualMins, plannedMins }) => {
     const aW = (actualMins / maxMins * 100).toFixed(1);
     const pW = (plannedMins / maxMins * 100).toFixed(1);
-    const wStr = calcWage(actualMins);
+    const wStr = calcWage(actualMins, mym);
     return `<div class="bar-row">
       <div class="bar-month">${m}月</div>
       <div class="bar-wrap">
@@ -1102,14 +1215,14 @@ function renderAnnual() {
   const hasData = months.some(m => m.actualMins > 0 || m.plannedMins > 0);
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
-  const hasWage = DB.hourlyRate > 0;
+  const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
   let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
-  for (const { m, actualMins, plannedMins, workedDays } of months) {
+  for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
     const diff = actualMins - plannedMins;
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
       diff === 0 ? '±0:00' :
       `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
-    const wage = calcWage(actualMins);
+    const wage = calcWage(actualMins, mym);
     html += `<tr>
       <td>${year}/${pad(m)}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
@@ -1141,7 +1254,7 @@ function exportAnnualCSV() {
   for (let m = 1; m <= 12; m++) {
     const ym = `${year}-${pad(m)}`;
     const { actualMins, plannedMins, workedDays } = getMonthData(ym);
-    const wage = calcWage(actualMins);
+    const wage = calcWage(actualMins, ym);
     csv += `${year}/${pad(m)},${minutesToHM(actualMins)},${minutesToHM(plannedMins)},${minutesToHM(actualMins-plannedMins)},${workedDays},${wage ?? ''}\n`;
   }
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -1156,7 +1269,10 @@ function exportAnnualCSV() {
 document.getElementById('shift-date').value = todayStr();
 const savedRate = DB.hourlyRate;
 if (savedRate) document.getElementById('hourly-rate').value = savedRate;
+// 月別時給の月を今月にデフォルト設定
+document.getElementById('wage-month').value = todayStr().substring(0, 7);
 updateWageDisplay();
+renderMonthlyRatesList();
 initMonthSelector();
 initYearSelector();
 refreshPunchUI();
