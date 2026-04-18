@@ -772,8 +772,10 @@ function cancelEditPunch() {
 }
 
 function saveEditPunch(date) {
-  const newIn  = document.getElementById(`edit-in-${date}`).value;
-  const newOut = document.getElementById(`edit-out-${date}`).value;
+  const newDate = document.getElementById(`edit-date-${date}`).value;
+  const newIn   = document.getElementById(`edit-in-${date}`).value;
+  const newOut  = document.getElementById(`edit-out-${date}`).value;
+  if (!newDate) { showToast('日付を入力してください'); return; }
   if (!newIn) { showToast('出勤時刻を入力してください'); return; }
   if (newOut) {
     const [ih, im] = newIn.split(':').map(Number);
@@ -783,8 +785,15 @@ function saveEditPunch(date) {
   const punches = DB.punches;
   const punch = punches.find(p => p.date === date);
   if (!punch) return;
+  // 日付が変わる場合、同じ日付のレコードが既にあれば弾く
+  if (newDate !== date && punches.some(p => p.date === newDate)) {
+    showToast('その日付の打刻は既に存在します'); return;
+  }
+  punch.date = newDate;
   punch.in = newIn;
   punch.out = newOut || null;
+  // 日付順に並び替え
+  punches.sort((a, b) => a.date < b.date ? 1 : -1);
   DB.punches = punches;
   SYNC.push();
   editingDate = null;
@@ -809,10 +818,10 @@ function renderPunchRecords() {
     if (editingDate === p.date) {
       // 編集行
       html += `<tr class="edit-row">
-        <td>${dateStr}</td>
+        <td><input class="time-input" type="date" id="edit-date-${p.date}" value="${p.date}" style="font-size:12px;padding:4px 6px;width:130px"></td>
         <td><input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}"></td>
         <td><input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}"></td>
-        <td colspan="${hasWage ? 2 : 1}" style="color:#718096;font-size:12px">※分単位で入力</td>
+        <td colspan="${hasWage ? 2 : 1}" style="color:#718096;font-size:12px">※編集して保存</td>
         <td style="white-space:nowrap">
           <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')">保存</button>
           <button class="btn-sm btn-cancel" style="margin-left:4px" onclick="cancelEditPunch()">取消</button>
