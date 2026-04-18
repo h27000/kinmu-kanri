@@ -722,7 +722,15 @@ function calcPunchMinutes(punch) {
   if (!punch.in || !punch.out) return 0;
   const [ih, im] = punch.in.split(':').map(Number);
   const [oh, om] = punch.out.split(':').map(Number);
-  return (oh * 60 + om) - (ih * 60 + im);
+  let mins = (oh * 60 + om) - (ih * 60 + im);
+  // 休憩時間を差し引く
+  if (punch.breakIn && punch.breakOut) {
+    const [bih, bim] = punch.breakIn.split(':').map(Number);
+    const [boh, bom] = punch.breakOut.split(':').map(Number);
+    const breakMins = (boh * 60 + bom) - (bih * 60 + bim);
+    if (breakMins > 0) mins -= breakMins;
+  }
+  return Math.max(0, mins);
 }
 
 function punchIn() {
@@ -772,15 +780,24 @@ function cancelEditPunch() {
 }
 
 function saveEditPunch(date) {
-  const newDate = document.getElementById(`edit-date-${date}`).value;
-  const newIn   = document.getElementById(`edit-in-${date}`).value;
-  const newOut  = document.getElementById(`edit-out-${date}`).value;
+  const newDate    = document.getElementById(`edit-date-${date}`).value;
+  const newIn      = document.getElementById(`edit-in-${date}`).value;
+  const newOut     = document.getElementById(`edit-out-${date}`).value;
+  const newBreakIn = document.getElementById(`edit-break-in-${date}`).value;
+  const newBreakOut= document.getElementById(`edit-break-out-${date}`).value;
   if (!newDate) { showToast('日付を入力してください'); return; }
   if (!newIn) { showToast('出勤時刻を入力してください'); return; }
   if (newOut) {
     const [ih, im] = newIn.split(':').map(Number);
     const [oh, om] = newOut.split(':').map(Number);
     if ((oh * 60 + om) <= (ih * 60 + im)) { showToast('退勤は出勤より後にしてください'); return; }
+  }
+  // 休憩バリデーション
+  if (newBreakIn || newBreakOut) {
+    if (!newBreakIn || !newBreakOut) { showToast('休憩入りと終わりの両方を入力してください'); return; }
+    const [bih, bim] = newBreakIn.split(':').map(Number);
+    const [boh, bom] = newBreakOut.split(':').map(Number);
+    if ((boh * 60 + bom) <= (bih * 60 + bim)) { showToast('休憩終わりは入りより後にしてください'); return; }
   }
   const punches = DB.punches;
   const punch = punches.find(p => p.date === date);
@@ -789,9 +806,11 @@ function saveEditPunch(date) {
   if (newDate !== date && punches.some(p => p.date === newDate)) {
     showToast('その日付の打刻は既に存在します'); return;
   }
-  punch.date = newDate;
-  punch.in = newIn;
-  punch.out = newOut || null;
+  punch.date     = newDate;
+  punch.in       = newIn;
+  punch.out      = newOut || null;
+  punch.breakIn  = newBreakIn  || null;
+  punch.breakOut = newBreakOut || null;
   // 日付順に並び替え
   punches.sort((a, b) => a.date < b.date ? 1 : -1);
   DB.punches = punches;
@@ -807,7 +826,7 @@ function renderPunchRecords() {
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
   const hasWage = DB.hourlyRate > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th>${hasWage ? '<th>給与</th>' : ''}<th></th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>実働</th>${hasWage ? '<th>給与</th>' : ''}<th></th></tr></thead><tbody>`;
 
   for (const p of punches) {
     const mins = calcPunchMinutes(p);
@@ -816,12 +835,21 @@ function renderPunchRecords() {
     const wage = calcWage(mins);
 
     if (editingDate === p.date) {
-      // 編集行
+      // 編集行（2行で表示: 1行目=日付・出退勤、2行目=休憩）
+      const colSpan = hasWage ? 7 : 6;
       html += `<tr class="edit-row">
         <td><input class="time-input" type="date" id="edit-date-${p.date}" value="${p.date}" style="font-size:12px;padding:4px 6px;width:130px"></td>
         <td><input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}"></td>
         <td><input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}"></td>
-        <td colspan="${hasWage ? 2 : 1}" style="color:#718096;font-size:12px">※編集して保存</td>
+        <td colspan="2" style="white-space:nowrap">
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#718096">入り</span>
+            <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="width:90px">
+            <span style="font-size:11px;color:#718096">終わり</span>
+            <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="width:90px">
+          </div>
+        </td>
+        ${hasWage ? '<td></td>' : ''}
         <td style="white-space:nowrap">
           <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')">保存</button>
           <button class="btn-sm btn-cancel" style="margin-left:4px" onclick="cancelEditPunch()">取消</button>
@@ -831,10 +859,19 @@ function renderPunchRecords() {
       const timeBadge = p.out
         ? `<span class="badge badge-blue">${minutesToHM(mins)}</span>`
         : `<span class="badge badge-green">勤務中</span>`;
+      // 休憩表示
+      let breakStr = '-';
+      if (p.breakIn && p.breakOut) {
+        const [bih, bim] = p.breakIn.split(':').map(Number);
+        const [boh, bom] = p.breakOut.split(':').map(Number);
+        const bMins = (boh * 60 + bom) - (bih * 60 + bim);
+        breakStr = `<span style="font-size:11px">${p.breakIn}〜${p.breakOut}<br><span style="color:#718096">${bMins}分</span></span>`;
+      }
       html += `<tr>
         <td>${dateStr}</td>
         <td>${p.in ?? '-'}</td>
         <td>${p.out ?? '-'}</td>
+        <td>${breakStr}</td>
         <td>${timeBadge}</td>
         ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
         <td style="white-space:nowrap">
