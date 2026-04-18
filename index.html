@@ -311,6 +311,23 @@
     <div class="wage-display" id="wage-display"></div>
   </div>
 
+  <!-- クラウド同期 -->
+  <div class="card">
+    <h3>☁️ クラウド同期</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;color:#4a5568">Web App URLを設定すると、スマホ・PCでデータを共有できます。</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="url" id="api-url" placeholder="https://script.google.com/macros/s/..."
+          style="flex:1;min-width:200px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+        <button class="btn-primary" onclick="saveApiUrl()" style="white-space:nowrap">保存</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="syncNow()" style="padding:8px 16px;background:#f0fff4;border:1px solid #9ae6b4;color:#276749;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">⬇ 今すぐ同期</button>
+        <div id="sync-status" style="font-size:12px;color:#718096;display:flex;align-items:center"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 打刻 -->
   <div class="card">
     <div class="punch-main">
@@ -442,6 +459,44 @@ const DB = {
   set hourlyRate(v) { localStorage.setItem('wt_hourly_rate', String(v)); },
 };
 
+// ---- クラウド同期 ----
+const SYNC = {
+  get url() { return localStorage.getItem('wt_api_url') || ''; },
+  set url(v) { localStorage.setItem('wt_api_url', v); },
+
+  // クラウドからデータを取得してlocalStorageを上書き
+  async pull() {
+    if (!this.url) return false;
+    try {
+      const res = await fetch(this.url);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.punches) localStorage.setItem('wt_punches', JSON.stringify(data.punches));
+      if (data.shifts) localStorage.setItem('wt_shifts', JSON.stringify(data.shifts));
+      if (data.hourlyRate !== undefined) localStorage.setItem('wt_hourly_rate', String(data.hourlyRate));
+      return true;
+    } catch(e) {
+      console.warn('pull failed:', e);
+      return false;
+    }
+  },
+
+  // localStorageのデータをクラウドに送信（fire and forget）
+  push() {
+    if (!this.url) return;
+    const body = JSON.stringify({
+      punches: DB.punches,
+      shifts: DB.shifts,
+      hourlyRate: DB.hourlyRate,
+    });
+    fetch(this.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body,
+    }).catch(e => console.warn('push failed:', e));
+  },
+};
+
 // ---- ユーティリティ ----
 function pad(n) { return String(n).padStart(2, '0'); }
 function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
@@ -495,6 +550,7 @@ function switchTab(name, btn) {
 function saveWage() {
   const val = parseInt(document.getElementById('hourly-rate').value) || 0;
   DB.hourlyRate = val;
+  SYNC.push();
   updateWageDisplay();
   renderPunchRecords();
 }
@@ -503,6 +559,28 @@ function updateWageDisplay() {
   const rate = DB.hourlyRate;
   const disp = document.getElementById('wage-display');
   disp.textContent = rate ? `8時間勤務の場合: ${fmtWage(rate * 8)}` : '';
+}
+
+// ---- クラウド同期 UI ----
+function saveApiUrl() {
+  const url = document.getElementById('api-url').value.trim();
+  SYNC.url = url;
+  showToast(url ? 'Web App URLを保存しました' : 'URLをクリアしました');
+}
+
+async function syncNow() {
+  const status = document.getElementById('sync-status');
+  status.textContent = '同期中...';
+  const ok = await SYNC.pull();
+  if (ok) {
+    status.textContent = '✅ 同期完了 ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+    refreshPunchUI();
+    renderShiftList();
+    renderSummary();
+    renderAnnual();
+  } else {
+    status.textContent = SYNC.url ? '❌ 同期失敗' : 'URLが未設定です';
+  }
 }
 
 // ---- 打刻 ----
@@ -544,6 +622,7 @@ function punchIn() {
   if (punches.find(p => p.date === today)) return;
   punches.push({ date: today, in: fmtTime(now), out: null });
   DB.punches = punches;
+  SYNC.push();
   showToast(`出勤打刻: ${fmtTime(now)}`);
   refreshPunchUI();
 }
@@ -556,6 +635,7 @@ function punchOut() {
   if (!punch || punch.out) return;
   punch.out = fmtTime(now);
   DB.punches = punches;
+  SYNC.push();
   showToast(`退勤打刻: ${fmtTime(now)}`);
   refreshPunchUI();
 }
@@ -563,6 +643,7 @@ function punchOut() {
 function deletePunch(date) {
   if (!confirm(`${date} の打刻を削除しますか？`)) return;
   DB.punches = DB.punches.filter(p => p.date !== date);
+  SYNC.push();
   refreshPunchUI();
   showToast('削除しました');
 }
@@ -595,6 +676,7 @@ function saveEditPunch(date) {
   punch.in = newIn;
   punch.out = newOut || null;
   DB.punches = punches;
+  SYNC.push();
   editingDate = null;
   showToast('打刻を更新しました');
   refreshPunchUI();
@@ -663,6 +745,7 @@ function addShift() {
   const shifts = DB.shifts;
   shifts.push({ id: Date.now(), date, start, end, break: brk, work: workMins, memo });
   DB.shifts = shifts;
+  SYNC.push();
   showToast('シフトを追加しました');
   document.getElementById('shift-memo').value = '';
   renderShiftList();
@@ -671,6 +754,7 @@ function addShift() {
 function deleteShift(id) {
   if (!confirm('このシフトを削除しますか？')) return;
   DB.shifts = DB.shifts.filter(s => s.id !== id);
+  SYNC.push();
   renderShiftList();
   showToast('削除しました');
 }
@@ -921,6 +1005,21 @@ initMonthSelector();
 initYearSelector();
 refreshPunchUI();
 renderShiftList();
+
+// URL欄に保存済みURLを表示
+const savedApiUrl = SYNC.url;
+if (savedApiUrl) {
+  document.getElementById('api-url').value = savedApiUrl;
+  // 自動同期
+  SYNC.pull().then(ok => {
+    if (ok) {
+      refreshPunchUI();
+      renderShiftList();
+      const status = document.getElementById('sync-status');
+      status.textContent = '✅ 自動同期済み';
+    }
+  });
+}
 </script>
 </body>
 </html>
