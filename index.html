@@ -358,6 +358,27 @@
 <!-- 打刻タブ -->
 <div id="tab-punch" class="tab active">
 
+  <!-- 打刻 -->
+  <div class="card">
+    <div class="punch-main">
+      <h2>本日の日付</h2>
+      <div class="today" id="today-date">--</div>
+      <div class="punch-buttons">
+        <button class="btn-in" id="btn-in" onclick="punchIn()">出勤</button>
+        <button class="btn-out" id="btn-out" onclick="punchOut()">退勤</button>
+      </div>
+      <div class="punch-status" id="punch-status">ステータスを読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- 打刻記録 -->
+  <div class="card">
+    <h3>打刻記録</h3>
+    <div id="punch-records-container">
+      <p class="empty-msg">記録がありません</p>
+    </div>
+  </div>
+
   <!-- 時給設定 -->
   <div class="card">
     <h3>時給設定</h3>
@@ -462,26 +483,6 @@
     </div>
   </div>
 
-  <!-- 打刻 -->
-  <div class="card">
-    <div class="punch-main">
-      <h2>本日の日付</h2>
-      <div class="today" id="today-date">--</div>
-      <div class="punch-buttons">
-        <button class="btn-in" id="btn-in" onclick="punchIn()">出勤</button>
-        <button class="btn-out" id="btn-out" onclick="punchOut()">退勤</button>
-      </div>
-      <div class="punch-status" id="punch-status">ステータスを読み込み中...</div>
-    </div>
-  </div>
-
-  <!-- 打刻記録 -->
-  <div class="card">
-    <h3>打刻記録</h3>
-    <div id="punch-records-container">
-      <p class="empty-msg">記録がありません</p>
-    </div>
-  </div>
 </div>
 
 <!-- シフトタブ -->
