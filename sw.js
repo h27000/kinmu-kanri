@@ -3,6 +3,7 @@ const ASSETS = [
   '/kinmu-kanri/',
   '/kinmu-kanri/index.html',
   '/kinmu-kanri/manifest.json',
+  '/kinmu-kanri/icon.svg',
 ];
 
 self.addEventListener('install', e => {
