@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>勤務時間管理</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2d3748">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="勤務管理">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='24' fill='%232d3748'/><text x='96' y='130' font-size='110' text-anchor='middle'>⏱</text></svg>">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
@@ -223,6 +230,60 @@
   .stat-box .unit { font-size: 12px; color: #718096; }
   .stat-box.highlight { background: #ebf8ff; border: 1px solid #bee3f8; }
   .stat-box.highlight .value { color: #2b6cb0; }
+
+  /* 給与明細 */
+  .payslip {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    margin-bottom: 16px;
+  }
+  .payslip-header {
+    background: #2d3748;
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .payslip-header h3 { font-size: 15px; font-weight: 700; }
+  .payslip-header .payslip-month { font-size: 13px; opacity: .8; }
+  .payslip-body { padding: 0; }
+  .payslip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f4f8;
+    font-size: 14px;
+  }
+  .payslip-row:last-child { border-bottom: none; }
+  .payslip-row .pl-label { color: #4a5568; }
+  .payslip-row .pl-sub { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .payslip-row .pl-amount { font-weight: 700; color: #2d3748; font-variant-numeric: tabular-nums; }
+  .payslip-row.pl-total {
+    background: #ebf8ff;
+    border-top: 2px solid #bee3f8;
+    padding: 16px 20px;
+  }
+  .payslip-row.pl-total .pl-label { font-weight: 700; color: #2b6cb0; font-size: 15px; }
+  .payslip-row.pl-total .pl-amount { font-size: 22px; color: #2b6cb0; }
+  .payslip-divider {
+    padding: 8px 20px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #a0aec0;
+    letter-spacing: .05em;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .payslip-empty {
+    padding: 24px 20px;
+    text-align: center;
+    color: #a0aec0;
+    font-size: 13px;
+  }
 
   /* 年間グラフ */
   .bar-chart { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
@@ -484,6 +545,17 @@
     <div class="stat-box"><div class="label">平均勤務</div><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div>
     <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
     <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
+  </div>
+
+  <!-- 給与明細 -->
+  <div class="payslip" id="payslip-card">
+    <div class="payslip-header">
+      <h3>📄 給与明細</h3>
+      <span class="payslip-month" id="payslip-month-label"></span>
+    </div>
+    <div class="payslip-body" id="payslip-body">
+      <div class="payslip-empty">時給を設定すると表示されます</div>
+    </div>
   </div>
 
   <div class="card">
@@ -1080,6 +1152,65 @@ function renderShiftList() {
   container.innerHTML = html;
 }
 
+// ---- 給与明細 ----
+function renderPayslip(ym, workedDays, sortedDates, days) {
+  const [y, m] = ym.split('-');
+  document.getElementById('payslip-month-label').textContent = `${y}年${parseInt(m)}月`;
+  const body = document.getElementById('payslip-body');
+  const rate = DB.getRate(ym);
+  if (!rate) {
+    body.innerHTML = '<div class="payslip-empty">時給を設定すると表示されます</div>';
+    return;
+  }
+
+  // 通常時間・残業時間を日ごとに集計
+  let normalMins = 0, overMins = 0;
+  for (const date of sortedDates) {
+    const p = days[date].punch;
+    if (!p) continue;
+    const mins = calcPunchMinutes(p);
+    normalMins += Math.min(mins, 480);
+    overMins   += Math.max(0, mins - 480);
+  }
+  const basicWage    = Math.floor(normalMins / 60 * rate);
+  const overtimeWage = Math.floor(overMins   / 60 * rate * 1.25);
+  const transport    = DB.transportFee > 0 ? DB.transportFee * workedDays : 0;
+  const total        = basicWage + overtimeWage + transport;
+
+  const fh = m => m > 0 ? `${Math.floor(m/60)}h${m%60 > 0 ? m%60+'m' : ''}` : '0h';
+
+  body.innerHTML = `
+    <div class="payslip-divider">勤怠</div>
+    <div class="payslip-row">
+      <div><div class="pl-label">出勤日数</div></div>
+      <div class="pl-amount">${workedDays} 日</div>
+    </div>
+    <div class="payslip-row">
+      <div><div class="pl-label">実働時間</div><div class="pl-sub">通常 ${fh(normalMins)}　残業 ${fh(overMins)}</div></div>
+      <div class="pl-amount">${fh(normalMins + overMins)}</div>
+    </div>
+    <div class="payslip-divider">支給</div>
+    <div class="payslip-row">
+      <div><div class="pl-label">基本給</div><div class="pl-sub">¥${rate.toLocaleString()} × ${(normalMins/60).toFixed(1)}h</div></div>
+      <div class="pl-amount">${fmtWage(basicWage)}</div>
+    </div>
+    ${overMins > 0 ? `
+    <div class="payslip-row">
+      <div><div class="pl-label">残業代</div><div class="pl-sub">¥${rate.toLocaleString()} × 1.25 × ${(overMins/60).toFixed(1)}h</div></div>
+      <div class="pl-amount" style="color:#c05621">${fmtWage(overtimeWage)}</div>
+    </div>` : ''}
+    ${transport > 0 ? `
+    <div class="payslip-row">
+      <div><div class="pl-label">交通費</div><div class="pl-sub">¥${DB.transportFee.toLocaleString()} × ${workedDays}日</div></div>
+      <div class="pl-amount">${fmtWage(transport)}</div>
+    </div>` : ''}
+    <div class="payslip-row pl-total">
+      <div class="pl-label">合計支給額</div>
+      <div class="pl-amount">${fmtWage(total)}</div>
+    </div>
+  `;
+}
+
 // ---- 月次集計 ----
 function initMonthSelector() {
   const sel = document.getElementById('summary-month');
@@ -1132,6 +1263,9 @@ function renderSummary() {
   document.getElementById('stat-avg').textContent       = workedDays > 0 ? (totalActual / 60 / workedDays).toFixed(1) : '0.0';
   document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
   document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
+
+  // 給与明細を描画
+  renderPayslip(ym, workedDays, sortedDates, days);
 
   const container = document.getElementById('summary-table-container');
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
@@ -1358,6 +1492,16 @@ if (SYNC.key) {
       const status = document.getElementById('sync-status');
       if (status) status.textContent = '✅ 自動同期済み';
     }
+  });
+}
+</script>
+
+<!-- PWA Service Worker 登録 -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/kinmu-kanri/sw.js')
+      .catch(e => console.log('SW registration failed:', e));
   });
 }
 </script>
