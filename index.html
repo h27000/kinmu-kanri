@@ -1042,7 +1042,8 @@ function renderPunchRecords() {
   for (const p of punches) {
     const mins = calcPunchMinutes(p);
     const [y, m, d] = p.date.split('-');
-    const dateStr = `${y}/${m}/${d}`;
+    const dow = ['日','月','火','水','木','金','土'][new Date(p.date).getDay()];
+    const dateStr = `${y}/${m}/${d}(${dow})`;
     const ym = `${y}-${m}`;
     const wage = calcWage(mins, ym);
 
@@ -1147,8 +1148,9 @@ function renderShiftList() {
   let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th>実働</th><th>メモ</th><th></th></tr></thead><tbody>`;
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
+    const sdow = ['日','月','火','水','木','金','土'][new Date(s.date).getDay()];
     html += `<tr>
-      <td>${y}/${m}/${d}</td>
+      <td>${y}/${m}/${d}(${sdow})</td>
       <td>${s.start}</td>
       <td>${s.end}</td>
       <td>${s.break}分</td>
