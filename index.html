@@ -434,11 +434,17 @@
       </div>
       <div class="form-group">
         <label>開始時刻</label>
-        <input type="time" id="shift-start">
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center">
+          <span style="font-size:13px;color:#718096">時</span>
+        </div>
       </div>
       <div class="form-group">
         <label>終了時刻</label>
-        <input type="time" id="shift-end">
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center">
+          <span style="font-size:13px;color:#718096">時</span>
+        </div>
       </div>
       <div class="form-group">
         <label>休憩 (分)</label>
@@ -1020,15 +1026,18 @@ function renderPunchRecords() {
 
 // ---- シフト ----
 function addShift() {
-  const date  = document.getElementById('shift-date').value;
-  const start = document.getElementById('shift-start').value;
-  const end   = document.getElementById('shift-end').value;
-  const brk   = parseInt(document.getElementById('shift-break').value) || 0;
-  const memo  = document.getElementById('shift-memo').value.trim();
-  if (!date || !start || !end) { showToast('日付・開始・終了を入力してください'); return; }
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  const totalMins = (eh * 60 + em) - (sh * 60 + sm);
+  const date   = document.getElementById('shift-date').value;
+  const startH = document.getElementById('shift-start').value;
+  const endH   = document.getElementById('shift-end').value;
+  const brk    = parseInt(document.getElementById('shift-break').value) || 0;
+  const memo   = document.getElementById('shift-memo').value.trim();
+  if (!date || startH === '' || endH === '') { showToast('日付・開始・終了を入力してください'); return; }
+  const sh = parseInt(startH);
+  const eh = parseInt(endH);
+  if (isNaN(sh) || isNaN(eh)) { showToast('時間を正しく入力してください'); return; }
+  const start = `${pad(sh)}:00`;
+  const end   = `${pad(eh)}:00`;
+  const totalMins = (eh * 60) - (sh * 60);
   if (totalMins <= 0) { showToast('終了は開始より後にしてください'); return; }
   const workMins = totalMins - brk;
   const shifts = DB.shifts;
@@ -1036,7 +1045,9 @@ function addShift() {
   DB.shifts = shifts;
   SYNC.push();
   showToast('シフトを追加しました');
-  document.getElementById('shift-memo').value = '';
+  document.getElementById('shift-start').value = '';
+  document.getElementById('shift-end').value   = '';
+  document.getElementById('shift-memo').value  = '';
   renderShiftList();
 }
 
