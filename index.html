@@ -317,6 +317,22 @@
         <div style="font-size:12px;color:#4299e1;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
       </div>
 
+      <!-- 交通費 -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+        <div style="font-size:13px;font-weight:600;color:#2d3748;margin-bottom:8px">🚃 交通費設定</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:13px;color:#4a5568;white-space:nowrap">1日あたり</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:14px;color:#4a5568">¥</span>
+            <input type="number" id="transport-fee" min="0" max="99999" step="10" placeholder="500"
+              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+              oninput="saveTransportFee()">
+          </div>
+          <span style="font-size:12px;color:#718096">（出勤日数×自動計算）</span>
+        </div>
+        <div id="transport-display" style="font-size:12px;color:#4a5568;margin-top:4px"></div>
+      </div>
+
       <!-- 月別時給 -->
       <div style="border-top:1px solid #e2e8f0;padding-top:12px">
         <div style="font-size:13px;font-weight:600;color:#2d3748;margin-bottom:8px">📅 月別時給設定</div>
@@ -461,6 +477,7 @@
     <div class="stat-box"><div class="label">出勤日数</div><div class="value" id="stat-days">--</div><div class="unit">日</div></div>
     <div class="stat-box"><div class="label">平均勤務</div><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div>
     <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
+    <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
   </div>
 
   <div class="card">
@@ -484,6 +501,7 @@
     <div class="stat-box"><div class="label">年間出勤日数</div><div class="value" id="ann-days">--</div><div class="unit">日</div></div>
     <div class="stat-box"><div class="label">月平均実働</div><div class="value" id="ann-avg">--</div><div class="unit">時間/月</div></div>
     <div class="stat-box highlight"><div class="label">年間給与</div><div class="value" id="ann-wage">--</div><div class="unit">円</div></div>
+    <div class="stat-box"><div class="label">年間交通費</div><div class="value" id="ann-transport">--</div><div class="unit">円</div></div>
   </div>
 
   <div class="bar-chart">
@@ -515,6 +533,9 @@ const DB = {
   // 基本時給（デフォルト）
   get hourlyRate() { return parseInt(localStorage.getItem('wt_hourly_rate') || '0'); },
   set hourlyRate(v) { localStorage.setItem('wt_hourly_rate', String(v)); },
+  // 交通費（1日あたり）
+  get transportFee() { return parseInt(localStorage.getItem('wt_transport_fee') || '0'); },
+  set transportFee(v) { localStorage.setItem('wt_transport_fee', String(v)); },
   // 月別時給 { "2026-01": 1100, "2026-03": 1200, ... }
   get hourlyRates() { return JSON.parse(localStorage.getItem('wt_hourly_rates') || '{}'); },
   set hourlyRates(v) { localStorage.setItem('wt_hourly_rates', JSON.stringify(v)); },
@@ -567,6 +588,7 @@ const SYNC = {
       if (Array.isArray(data.shifts))  localStorage.setItem('wt_shifts',  JSON.stringify(data.shifts));
       if (data.hourlyRate !== undefined) localStorage.setItem('wt_hourly_rate', String(data.hourlyRate));
       if (data.hourlyRates && typeof data.hourlyRates === 'object') localStorage.setItem('wt_hourly_rates', JSON.stringify(data.hourlyRates));
+      if (data.transportFee !== undefined) localStorage.setItem('wt_transport_fee', String(data.transportFee));
       return true;
     } catch(e) { console.warn('pull failed:', e); return false; }
   },
@@ -578,7 +600,7 @@ const SYNC = {
     fetch(`${this.BASE}/${this.bin}`, {
       method: 'PUT',
       headers: this.headers(),
-      body: JSON.stringify({ punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates }),
+      body: JSON.stringify({ punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates, transportFee: DB.transportFee }),
     }).catch(e => console.warn('push failed:', e));
   },
 };
@@ -685,6 +707,22 @@ function deleteMonthlyRate(month) {
   renderMonthlyRatesList();
   renderPunchRecords();
   showToast(`${month} の月別設定を削除しました`);
+}
+
+// ---- 交通費設定 ----
+function saveTransportFee() {
+  const val = parseInt(document.getElementById('transport-fee').value) || 0;
+  DB.transportFee = val;
+  SYNC.push();
+  updateTransportDisplay();
+  renderSummary();
+  renderAnnual();
+}
+
+function updateTransportDisplay() {
+  const fee = DB.transportFee;
+  const disp = document.getElementById('transport-display');
+  if (disp) disp.textContent = fee ? `20日出勤の場合: ${fmtWage(fee * 20)}` : '';
 }
 
 function renderMonthlyRatesList() {
@@ -1075,17 +1113,21 @@ function renderSummary() {
     return hasRate ? sum : null;
   })();
 
-  document.getElementById('stat-actual').textContent  = minutesToH(totalActual);
-  document.getElementById('stat-planned').textContent = minutesToH(totalPlanned);
-  document.getElementById('stat-days').textContent    = workedDays;
-  document.getElementById('stat-avg').textContent     = workedDays > 0 ? (totalActual / 60 / workedDays).toFixed(1) : '0.0';
-  document.getElementById('stat-wage').textContent    = totalWage !== null ? totalWage.toLocaleString() : '--';
+  const totalTransport = DB.transportFee > 0 ? DB.transportFee * workedDays : null;
+
+  document.getElementById('stat-actual').textContent    = minutesToH(totalActual);
+  document.getElementById('stat-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('stat-days').textContent      = workedDays;
+  document.getElementById('stat-avg').textContent       = workedDays > 0 ? (totalActual / 60 / workedDays).toFixed(1) : '0.0';
+  document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
+  document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
   const container = document.getElementById('summary-table-container');
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  const hasTransport = DB.transportFee > 0;
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -1096,6 +1138,7 @@ function renderSummary() {
     const diffStr = diff === 0 ? '-' :
       `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcWage(actualMins, date.substring(0, 7));
+    const transport = (hasTransport && p && actualMins > 0) ? DB.transportFee : null;
     html += `<tr>
       <td>${dy}/${dm}/${dd}(${dow})</td>
       <td>${p?.in ?? '-'}</td>
@@ -1104,6 +1147,7 @@ function renderSummary() {
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
+      ${hasTransport ? `<td>${transport !== null ? fmtWage(transport) : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
@@ -1121,13 +1165,14 @@ function exportCSV() {
     if (!days[s.date]) days[s.date] = {};
     (days[s.date].shifts = days[s.date].shifts || []).push(s);
   }
-  let csv = '日付,出勤,退勤,実働時間,予定時間,差分,給与\n';
+  let csv = '日付,出勤,退勤,実働時間,予定時間,差分,給与,交通費\n';
   for (const date of Object.keys(days).sort()) {
     const p = days[date].punch;
     const actual  = p ? calcPunchMinutes(p) : 0;
     const planned = (days[date].shifts || []).reduce((a, s) => a + s.work, 0);
     const wage = calcWage(actual, date.substring(0, 7));
-    csv += `${date},${p?.in??''},${p?.out??''},${minutesToHM(actual)},${minutesToHM(planned)},${minutesToHM(actual-planned)},${wage ?? ''}\n`;
+    const transport = (p && actual > 0 && DB.transportFee) ? DB.transportFee : '';
+    csv += `${date},${p?.in??''},${p?.out??''},${minutesToHM(actual)},${minutesToHM(planned)},${minutesToHM(actual-planned)},${wage ?? ''},${transport}\n`;
   }
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -1188,11 +1233,14 @@ function renderAnnual() {
   })();
   const activeMonths = months.filter(m => m.actualMins > 0).length;
 
-  document.getElementById('ann-actual').textContent  = minutesToH(totalActual);
-  document.getElementById('ann-planned').textContent = minutesToH(totalPlanned);
-  document.getElementById('ann-days').textContent    = totalDays;
-  document.getElementById('ann-avg').textContent     = activeMonths > 0 ? (totalActual / 60 / activeMonths).toFixed(1) : '0.0';
-  document.getElementById('ann-wage').textContent    = totalWage !== null ? totalWage.toLocaleString() : '--';
+  const totalTransport = DB.transportFee > 0 ? DB.transportFee * totalDays : null;
+
+  document.getElementById('ann-actual').textContent    = minutesToH(totalActual);
+  document.getElementById('ann-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('ann-days').textContent      = totalDays;
+  document.getElementById('ann-avg').textContent       = activeMonths > 0 ? (totalActual / 60 / activeMonths).toFixed(1) : '0.0';
+  document.getElementById('ann-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
+  document.getElementById('ann-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
   // バーチャート
   const maxMins = Math.max(...months.map(m => Math.max(m.actualMins, m.plannedMins)), 1);
@@ -1216,13 +1264,15 @@ function renderAnnual() {
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
-  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  const hasTransport = DB.transportFee > 0;
+  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
   for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
     const diff = actualMins - plannedMins;
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
       diff === 0 ? '±0:00' :
       `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcWage(actualMins, mym);
+    const transport = hasTransport ? DB.transportFee * workedDays : null;
     html += `<tr>
       <td>${year}/${pad(m)}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
@@ -1230,6 +1280,7 @@ function renderAnnual() {
       <td>${diffStr}</td>
       <td>${workedDays > 0 ? workedDays+'日' : '-'}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
+      ${hasTransport ? `<td>${transport ? fmtWage(transport) : '-'}</td>` : ''}
     </tr>`;
   }
   const totalDiff = totalActual - totalPlanned;
@@ -1242,6 +1293,7 @@ function renderAnnual() {
     <td>${totalDiffStr}</td>
     <td>${totalDays}日</td>
     ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td>` : ''}
+    ${hasTransport ? `<td>${totalTransport !== null ? '<span class="wage-chip">'+fmtWage(totalTransport)+'</span>' : '-'}</td>` : ''}
   </tr>`;
   html += '</tbody></table>';
   container.innerHTML = html;
@@ -1250,12 +1302,13 @@ function renderAnnual() {
 // ---- CSV出力（年間）----
 function exportAnnualCSV() {
   const year = document.getElementById('annual-year').value;
-  let csv = '月,実労働時間,予定時間,差分,出勤日数,給与\n';
+  let csv = '月,実労働時間,予定時間,差分,出勤日数,給与,交通費\n';
   for (let m = 1; m <= 12; m++) {
     const ym = `${year}-${pad(m)}`;
     const { actualMins, plannedMins, workedDays } = getMonthData(ym);
     const wage = calcWage(actualMins, ym);
-    csv += `${year}/${pad(m)},${minutesToHM(actualMins)},${minutesToHM(plannedMins)},${minutesToHM(actualMins-plannedMins)},${workedDays},${wage ?? ''}\n`;
+    const transport = DB.transportFee > 0 ? DB.transportFee * workedDays : '';
+    csv += `${year}/${pad(m)},${minutesToHM(actualMins)},${minutesToHM(plannedMins)},${minutesToHM(actualMins-plannedMins)},${workedDays},${wage ?? ''},${transport}\n`;
   }
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -1269,9 +1322,12 @@ function exportAnnualCSV() {
 document.getElementById('shift-date').value = todayStr();
 const savedRate = DB.hourlyRate;
 if (savedRate) document.getElementById('hourly-rate').value = savedRate;
+const savedTransport = DB.transportFee;
+if (savedTransport) document.getElementById('transport-fee').value = savedTransport;
 // 月別時給の月を今月にデフォルト設定
 document.getElementById('wage-month').value = todayStr().substring(0, 7);
 updateWageDisplay();
+updateTransportDisplay();
 renderMonthlyRatesList();
 initMonthSelector();
 initYearSelector();
