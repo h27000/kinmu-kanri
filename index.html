@@ -496,14 +496,14 @@
       <div class="form-group">
         <label>開始時刻</label>
         <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center">
+          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
           <span style="font-size:13px;color:#718096">時</span>
         </div>
       </div>
       <div class="form-group">
         <label>終了時刻</label>
         <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center">
+          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
           <span style="font-size:13px;color:#718096">時</span>
         </div>
       </div>
@@ -1097,6 +1097,14 @@ function renderPunchRecords() {
 }
 
 // ---- シフト ----
+function autoFillBreak() {
+  const sh = parseInt(document.getElementById('shift-start').value);
+  const eh = parseInt(document.getElementById('shift-end').value);
+  if (isNaN(sh) || isNaN(eh)) return;
+  const diff = eh - sh;
+  document.getElementById('shift-break').value = diff >= 7 ? 60 : 0;
+}
+
 function addShift() {
   const date   = document.getElementById('shift-date').value;
   const startH = document.getElementById('shift-start').value;
