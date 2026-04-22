@@ -166,6 +166,26 @@
     text-overflow: ellipsis;
   }
   .shift-actions { flex-shrink: 0; align-self: center; }
+  .time-select {
+    width: 100%;
+    padding: 10px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: white;
+    color: #1a202c;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 26px;
+    text-align: center;
+  }
+  .time-select:focus { border-color: #c53030; box-shadow: 0 0 0 2px rgba(197,48,48,0.15); }
 
   .badge {
     display: inline-block;
@@ -653,21 +673,27 @@
     <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-end">
       <div class="form-group" style="flex:1">
         <label>開始</label>
-        <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:100%;padding:10px 6px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
-          <span style="font-size:12px;color:#718096;white-space:nowrap">時</span>
-        </div>
+        <select id="shift-start" class="time-select" onchange="autoFillBreak()">
+          <option value="">--</option>
+        </select>
       </div>
       <div class="form-group" style="flex:1">
         <label>終了</label>
-        <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:100%;padding:10px 6px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
-          <span style="font-size:12px;color:#718096;white-space:nowrap">時</span>
-        </div>
+        <select id="shift-end" class="time-select" onchange="autoFillBreak()">
+          <option value="">--</option>
+        </select>
       </div>
       <div class="form-group" style="flex:1">
         <label>休憩(分)</label>
-        <input type="number" id="shift-break" value="60" min="0" max="480" step="5" style="padding:10px 6px;font-size:16px;text-align:center">
+        <select id="shift-break" class="time-select">
+          <option value="0">0分</option>
+          <option value="15">15分</option>
+          <option value="30">30分</option>
+          <option value="45">45分</option>
+          <option value="60" selected>60分</option>
+          <option value="90">90分</option>
+          <option value="120">120分</option>
+        </select>
       </div>
     </div>
     <!-- 行3: メモ + 追加ボタン -->
@@ -1387,6 +1413,23 @@ function renderPunchRecords() {
 }
 
 // ---- シフト ----
+// 時刻セレクトのオプション生成（0〜23時）
+(function initShiftSelects() {
+  const hours = Array.from({length: 24}, (_, i) => i);
+  ['shift-start', 'shift-end'].forEach(id => {
+    const sel = document.getElementById(id);
+    hours.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = `${h}時`;
+      sel.appendChild(opt);
+    });
+  });
+  // デフォルト値
+  document.getElementById('shift-start').value = 9;
+  document.getElementById('shift-end').value   = 18;
+})();
+
 function autoFillBreak() {
   const sh = parseInt(document.getElementById('shift-start').value);
   const eh = parseInt(document.getElementById('shift-end').value);
@@ -1415,8 +1458,9 @@ function addShift() {
   DB.shifts = shifts;
   SYNC.push();
   showToast('シフトを追加しました');
-  document.getElementById('shift-start').value = '';
-  document.getElementById('shift-end').value   = '';
+  document.getElementById('shift-start').value = 9;
+  document.getElementById('shift-end').value   = 18;
+  document.getElementById('shift-break').value = 60;
   document.getElementById('shift-memo').value  = '';
   renderShiftList();
 }
