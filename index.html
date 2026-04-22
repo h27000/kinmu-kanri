@@ -109,6 +109,64 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #f7fafc; }
 
+  /* シフトカード */
+  .shift-card {
+    border: 1px solid #f0d4d4;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .shift-card:last-child { margin-bottom: 0; }
+  .shift-date-block {
+    min-width: 52px;
+    text-align: center;
+    background: #7b1111;
+    color: white;
+    border-radius: 10px;
+    padding: 6px 8px;
+    flex-shrink: 0;
+  }
+  .shift-date-block .s-month { font-size: 10px; opacity: 0.85; }
+  .shift-date-block .s-day   { font-size: 22px; font-weight: 700; line-height: 1.1; }
+  .shift-date-block .s-dow   { font-size: 11px; font-weight: 600; opacity: 0.9; }
+  .shift-info { flex: 1; min-width: 0; }
+  .shift-time-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 4px;
+  }
+  .shift-time-arrow { color: #c53030; font-size: 13px; }
+  .shift-meta-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .shift-meta-item {
+    font-size: 11px;
+    color: #718096;
+    background: #f7fafc;
+    border-radius: 6px;
+    padding: 2px 7px;
+  }
+  .shift-memo-text {
+    font-size: 11px;
+    color: #718096;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .shift-actions { flex-shrink: 0; }
+
   .badge {
     display: inline-block;
     padding: 3px 8px;
@@ -586,36 +644,36 @@
 <div id="tab-shift" class="tab">
   <div class="form-card">
     <h3>シフトを追加</h3>
-    <div class="form-row">
-      <div class="form-group">
+    <div class="form-row" style="flex-wrap:wrap;gap:10px">
+      <div class="form-group" style="min-width:130px;flex:2">
         <label>日付</label>
         <input type="date" id="shift-date">
       </div>
-      <div class="form-group">
-        <label>開始時刻</label>
+      <div class="form-group" style="min-width:80px">
+        <label>開始</label>
         <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
+          <input type="number" id="shift-start" min="0" max="23" step="1" placeholder="9" style="width:60px;padding:10px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
           <span style="font-size:13px;color:#718096">時</span>
         </div>
       </div>
-      <div class="form-group">
-        <label>終了時刻</label>
+      <div class="form-group" style="min-width:80px">
+        <label>終了</label>
         <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:60px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
+          <input type="number" id="shift-end" min="0" max="30" step="1" placeholder="18" style="width:60px;padding:10px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;outline:none;text-align:center" oninput="autoFillBreak()">
           <span style="font-size:13px;color:#718096">時</span>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="min-width:90px">
         <label>休憩 (分)</label>
         <input type="number" id="shift-break" value="60" min="0" max="480" step="5">
       </div>
     </div>
-    <div class="form-row">
+    <div class="form-row" style="gap:10px">
       <div class="form-group" style="flex:3">
         <label>メモ</label>
         <textarea id="shift-memo" rows="2" placeholder="任意"></textarea>
       </div>
-      <div class="form-group" style="justify-content:flex-end">
+      <div class="form-group" style="justify-content:flex-end;min-width:80px">
         <button class="btn-primary" onclick="addShift()">追加</button>
       </div>
     </div>
@@ -1372,21 +1430,37 @@ function renderShiftList() {
   const container = document.getElementById('shift-list-container');
   const shifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
-  let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th>実働</th><th>メモ</th><th></th></tr></thead><tbody>`;
+  const DOWS = ['日','月','火','水','木','金','土'];
+  const DOW_COLORS = { '日':'#e53e3e','土':'#3182ce' };
+  let html = '';
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
-    const sdow = ['日','月','火','水','木','金','土'][new Date(s.date).getDay()];
-    html += `<tr>
-      <td>${y}/${m}/${d}(${sdow})</td>
-      <td>${s.start}</td>
-      <td>${s.end}</td>
-      <td>${s.break}分</td>
-      <td><span class="badge badge-blue">${minutesToHM(s.work)}</span></td>
-      <td style="color:#718096;font-size:12px">${s.memo || '-'}</td>
-      <td><button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button></td>
-    </tr>`;
+    const dow = DOWS[new Date(s.date).getDay()];
+    const dowColor = DOW_COLORS[dow] || 'white';
+    html += `
+    <div class="shift-card">
+      <div class="shift-date-block">
+        <div class="s-month">${parseInt(m)}月</div>
+        <div class="s-day">${parseInt(d)}</div>
+        <div class="s-dow" style="color:${dowColor}">${dow}</div>
+      </div>
+      <div class="shift-info">
+        <div class="shift-time-row">
+          <span>${s.start}:00</span>
+          <span class="shift-time-arrow">→</span>
+          <span>${s.end}:00</span>
+          <span class="badge badge-blue" style="margin-left:4px">${minutesToHM(s.work)}</span>
+        </div>
+        <div class="shift-meta-row">
+          <span class="shift-meta-item">休憩 ${s.break}分</span>
+        </div>
+        ${s.memo ? `<div class="shift-memo-text">📝 ${s.memo}</div>` : ''}
+      </div>
+      <div class="shift-actions">
+        <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
+      </div>
+    </div>`;
   }
-  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
