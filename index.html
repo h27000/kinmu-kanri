@@ -2290,8 +2290,8 @@ updateTransportDisplay();
 renderMonthlyRatesList();
 // ---- 休憩時間マイグレーション（一回のみ）----
 // 7時間以上→60分、未満→0分 に一括修正
-(function migrateBreakTimes() {
-  if (localStorage.getItem('wt_break_migrated_v2')) return;
+function migrateBreakTimes() {
+  if (localStorage.getItem('wt_break_migrated_v3')) return;
   const shifts = DB.shifts;
   let changed = false;
   const fixed = shifts.map(s => {
@@ -2307,10 +2307,11 @@ renderMonthlyRatesList();
   if (changed) {
     DB.shifts = fixed;
     SYNC.push();
+    renderShiftList();
     console.log('[TimeKeeper] 休憩時間を自動修正しました');
   }
-  localStorage.setItem('wt_break_migrated_v2', '1');
-})();
+  localStorage.setItem('wt_break_migrated_v3', '1');
+}
 
 initMonthSelector();
 initYearSelector();
@@ -2319,7 +2320,7 @@ renderShiftList();
 
 // 同期UI初期化
 updateSyncUI();
-// APIキーが設定済みなら自動同期
+// APIキーが設定済みなら自動同期（pull後にマイグレーション実行）
 if (SYNC.key) {
   SYNC.pull().then(ok => {
     if (ok) {
@@ -2330,7 +2331,12 @@ if (SYNC.key) {
       const status = document.getElementById('sync-status');
       if (status) status.textContent = '✅ 自動同期済み';
     }
+    // pullの後にマイグレーション実行（pullで古いデータが来ても上書きできる）
+    migrateBreakTimes();
   });
+} else {
+  // クラウド同期なしの場合はそのまま実行
+  migrateBreakTimes();
 }
 </script>
 
