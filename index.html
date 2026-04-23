@@ -2128,6 +2128,18 @@ function exportCSV() {
   showToast('CSVを出力しました');
 }
 
+// 月の給与を日ごとに正確に計算（月次集計と同じロジック）
+function calcMonthWage(ym) {
+  const punches = DB.punches.filter(p => p.date.startsWith(ym) && p.in && p.out);
+  if (!punches.length) return null;
+  let sum = 0; let hasRate = false;
+  for (const p of punches) {
+    const w = calcWage(calcPunchMinutes(p), ym);
+    if (w !== null) { sum += w; hasRate = true; }
+  }
+  return hasRate ? sum : null;
+}
+
 // ---- 年間集計 ----
 function initYearSelector() {
   const sel = document.getElementById('annual-year');
@@ -2168,11 +2180,11 @@ function renderAnnual() {
     totalPlanned += data.plannedMins;
     totalDays += data.workedDays;
   }
-  // 年間合計給与: 月ごとに正確に計算して合算
+  // 年間合計給与: 日ごとに正確に計算して合算
   const totalWage = (() => {
     let sum = 0; let hasRate = false;
-    for (const { ym: mym, actualMins } of months) {
-      const w = calcWage(actualMins, mym);
+    for (const { ym: mym } of months) {
+      const w = calcMonthWage(mym);
       if (w !== null) { sum += w; hasRate = true; }
     }
     return hasRate ? sum : null;
@@ -2193,7 +2205,7 @@ function renderAnnual() {
   document.getElementById('annual-chart').innerHTML = months.map(({ m, ym: mym, actualMins, plannedMins }) => {
     const aW = (actualMins / maxMins * 100).toFixed(1);
     const pW = (plannedMins / maxMins * 100).toFixed(1);
-    const wStr = calcWage(actualMins, mym);
+    const wStr = calcMonthWage(mym);
     return `<div class="bar-row">
       <div class="bar-month">${m}月</div>
       <div class="bar-wrap">
@@ -2217,7 +2229,7 @@ function renderAnnual() {
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
       diff === 0 ? '±0:00' :
       `<span style="color:${diff>0?'#276749':'#c53030'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
-    const wage = calcWage(actualMins, mym);
+    const wage = calcMonthWage(mym);
     const transport = hasTransport ? DB.transportFee * workedDays : null;
     html += `<tr>
       <td>${year}/${pad(m)}</td>
