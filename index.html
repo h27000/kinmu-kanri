@@ -2276,6 +2276,30 @@ document.getElementById('wage-month').value = todayStr().substring(0, 7);
 updateWageDisplay();
 updateTransportDisplay();
 renderMonthlyRatesList();
+// ---- 休憩時間マイグレーション（一回のみ）----
+// 7時間以上→60分、未満→0分 に一括修正
+(function migrateBreakTimes() {
+  if (localStorage.getItem('wt_break_migrated_v1')) return;
+  const shifts = DB.shifts;
+  let changed = false;
+  const fixed = shifts.map(s => {
+    const sh = parseInt(s.start);
+    const eh = parseInt(s.end);
+    if (isNaN(sh) || isNaN(eh)) return s;
+    const diff = eh - sh;
+    const brk  = diff >= 7 ? 60 : 0;
+    const work  = diff * 60 - brk;
+    if (s.break !== brk) { changed = true; return { ...s, break: brk, work }; }
+    return s;
+  });
+  if (changed) {
+    DB.shifts = fixed;
+    SYNC.push();
+    console.log('[TimeKeeper] 休憩時間を自動修正しました');
+  }
+  localStorage.setItem('wt_break_migrated_v1', '1');
+})();
+
 initMonthSelector();
 initYearSelector();
 refreshPunchUI();
