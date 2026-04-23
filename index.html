@@ -1520,7 +1520,6 @@ function addShift() {
   const date   = document.getElementById('shift-date').value;
   const startH = document.getElementById('shift-start').value;
   const endH   = document.getElementById('shift-end').value;
-  const brk    = parseInt(document.getElementById('shift-break').value) || 0;
   const memo   = document.getElementById('shift-memo').value.trim();
   if (!date || startH === '' || endH === '') { showToast('日付・開始・終了を入力してください'); return; }
   const sh = parseInt(startH);
@@ -1530,6 +1529,8 @@ function addShift() {
   const end   = `${pad(eh)}:00`;
   const totalMins = (eh * 60) - (sh * 60);
   if (totalMins <= 0) { showToast('終了は開始より後にしてください'); return; }
+  // 7時間以上→60分休憩、未満→0分（保存時に直接計算）
+  const brk = totalMins >= 420 ? 60 : 0;
   const workMins = totalMins - brk;
   const shifts = DB.shifts;
   shifts.push({ id: Date.now(), date, start, end, break: brk, work: workMins, memo });
