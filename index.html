@@ -1509,8 +1509,11 @@ function renderPunchRecords() {
 })();
 
 function autoFillBreak() {
-  // 休憩は60分固定
-  document.getElementById('shift-break').value = 60;
+  const sh = parseInt(document.getElementById('shift-start').value);
+  const eh = parseInt(document.getElementById('shift-end').value);
+  if (isNaN(sh) || isNaN(eh)) return;
+  const diff = eh - sh;
+  document.getElementById('shift-break').value = diff >= 7 ? 60 : 0;
 }
 
 function addShift() {
