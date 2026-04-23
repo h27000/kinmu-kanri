@@ -2291,7 +2291,7 @@ renderMonthlyRatesList();
 // ---- 休憩時間マイグレーション（一回のみ）----
 // 7時間以上→60分、未満→0分 に一括修正
 (function migrateBreakTimes() {
-  if (localStorage.getItem('wt_break_migrated_v1')) return;
+  if (localStorage.getItem('wt_break_migrated_v2')) return;
   const shifts = DB.shifts;
   let changed = false;
   const fixed = shifts.map(s => {
@@ -2309,7 +2309,7 @@ renderMonthlyRatesList();
     SYNC.push();
     console.log('[TimeKeeper] 休憩時間を自動修正しました');
   }
-  localStorage.setItem('wt_break_migrated_v1', '1');
+  localStorage.setItem('wt_break_migrated_v2', '1');
 })();
 
 initMonthSelector();
