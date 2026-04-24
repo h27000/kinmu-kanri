@@ -2478,20 +2478,26 @@ renderAutoBackupList();
 
 // 同期UI初期化
 updateSyncUI();
-// APIキーが設定済みなら自動同期（pull後にマイグレーション実行）
+
+// 自動pull（起動時 + 3分ごと）
+async function autoPull() {
+  if (!SYNC.key) return;
+  const ok = await SYNC.pull();
+  if (ok) {
+    refreshPunchUI();
+    renderShiftList();
+    renderSummary();
+    renderAnnual();
+    const status = document.getElementById('sync-status');
+    if (status) status.textContent = '✅ 自動同期済み ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+// APIキーが設定済みなら起動時に自動sync（pull後にマイグレーション実行）
 if (SYNC.key) {
-  SYNC.pull().then(ok => {
-    if (ok) {
-      refreshPunchUI();
-      renderShiftList();
-      renderSummary();
-      renderAnnual();
-      const status = document.getElementById('sync-status');
-      if (status) status.textContent = '✅ 自動同期済み';
-    }
-    // pullの後にマイグレーション実行（pullで古いデータが来ても上書きできる）
-    migrateBreakTimes();
-  });
+  autoPull().then(() => migrateBreakTimes());
+  // 3分ごとに定期pull
+  setInterval(autoPull, 3 * 60 * 1000);
 } else {
   // クラウド同期なしの場合はそのまま実行
   migrateBreakTimes();
