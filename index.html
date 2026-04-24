@@ -620,9 +620,9 @@
       <!-- 未設定時: セットアップ案内 -->
       <div id="sync-setup" style="display:flex;flex-direction:column;gap:8px">
         <div style="font-size:12px;color:#718096;background:#f7fafc;border-radius:8px;padding:10px;line-height:1.7">
-          1️⃣ <a href="https://jsonbin.io" target="_blank" style="color:#1a202c">jsonbin.io</a> で無料アカウントを作成<br>
-          2️⃣ 「API Keys」からマスターキーをコピー<br>
-          3️⃣ 下に貼り付けて「保存」
+          1️⃣ <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#1a202c">GitHub → Settings → Tokens</a> でトークンを発行<br>
+          2️⃣ スコープは <strong>gist</strong> にチェック<br>
+          3️⃣ 発行されたトークン（ghp_〜）を下に貼り付けて「保存」
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input type="text" id="jb-key-input" placeholder="$2a$10$..." autocomplete="off"
@@ -959,31 +959,39 @@ const DB = {
   },
 };
 
-// ---- クラウド同期 (JSONBin.io) ----
+// ---- クラウド同期 (GitHub Gist) ----
 const SYNC = {
-  BASE: 'https://api.jsonbin.io/v3/b',
+  BASE: 'https://api.github.com/gists',
   get key()   { return localStorage.getItem('wt_jb_key') || ''; },
   set key(v)  { localStorage.setItem('wt_jb_key', v); },
   get bin()   { return localStorage.getItem('wt_jb_bin') || ''; },
   set bin(v)  { localStorage.setItem('wt_jb_bin', v); },
   get ready() { return !!(this.key && this.bin); },
 
-  headers(extra) {
-    return { 'X-Master-Key': this.key, 'Content-Type': 'application/json', ...extra };
+  headers() {
+    return {
+      'Authorization': `token ${this.key}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    };
   },
 
-  // binがなければ新規作成
+  // Gistがなければ新規作成
   async ensureBin() {
     if (this.bin) return true;
     try {
       const res = await fetch(this.BASE, {
         method: 'POST',
-        headers: { ...this.headers(), 'X-Bin-Name': 'TimeKeeper' },
-        body: JSON.stringify({ punches: [], shifts: [], hourlyRate: 0 }),
+        headers: this.headers(),
+        body: JSON.stringify({
+          description: 'TimeKeeper データ',
+          public: false,
+          files: { 'timekeeper-data.json': { content: JSON.stringify({ punches: [], shifts: [], hourlyRate: 0 }) } },
+        }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.message || JSON.stringify(d));
-      this.bin = d.metadata.id;
+      this.bin = d.id;
       return true;
     } catch(e) { console.warn('ensureBin failed:', e.message); return false; }
   },
@@ -993,9 +1001,12 @@ const SYNC = {
     if (!this.key) return false;
     if (!(await this.ensureBin())) return false;
     try {
-      const res = await fetch(`${this.BASE}/${this.bin}/latest`, { headers: this.headers({'X-Bin-Meta': 'false'}) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+      const res = await fetch(`${this.BASE}/${this.bin}`, { headers: this.headers() });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.message || JSON.stringify(d));
+      const content = d.files?.['timekeeper-data.json']?.content;
+      if (!content) return false;
+      const data = JSON.parse(content);
       if (Array.isArray(data.punches)) localStorage.setItem('wt_punches', JSON.stringify(data.punches));
       if (Array.isArray(data.shifts))  localStorage.setItem('wt_shifts',  JSON.stringify(data.shifts));
       if (data.hourlyRate !== undefined) localStorage.setItem('wt_hourly_rate', String(data.hourlyRate));
@@ -1007,14 +1018,20 @@ const SYNC = {
     } catch(e) { console.warn('pull failed:', e); return false; }
   },
 
-  // localStorageのデータをクラウドに送信（fire and forget）
+  // localStorageのデータをクラウドに送信
   async push() {
     if (!this.key) return;
     if (!(await this.ensureBin())) return;
     fetch(`${this.BASE}/${this.bin}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: this.headers(),
-      body: JSON.stringify({ punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates, transportFee: DB.transportFee, hireDate: DB.hireDate, leaveUsed: DB.leaveUsed }),
+      body: JSON.stringify({
+        files: { 'timekeeper-data.json': { content: JSON.stringify({
+          punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
+          hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
+          hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+        }) } },
+      }),
     }).catch(e => console.warn('push failed:', e));
   },
 };
