@@ -640,18 +640,26 @@
         </div>
         <div id="sync-status" style="font-size:12px;color:#718096;display:flex;align-items:center"></div>
         <!-- 共有コード表示エリア -->
-        <div id="share-code-area" style="display:none;background:#f7fafc;border-radius:8px;padding:10px;font-size:12px">
-          <div style="margin-bottom:6px;color:#4a5568;font-weight:600">📱 他のデバイスでこのコードを入力してください</div>
+        <div id="share-code-area" style="display:none;background:#fffbeb;border:1px solid #f6c90e;border-radius:8px;padding:12px;font-size:12px">
+          <div style="margin-bottom:6px;color:#744210;font-weight:700">📱 スマホで同期する手順</div>
+          <div style="color:#744210;margin-bottom:8px;line-height:1.7">
+            1️⃣ 下の「コピー」ボタンを押す<br>
+            2️⃣ スマホでもこのアプリを開く<br>
+            3️⃣ シフトタブ→「共有コードで接続する」にペースト→「適用」
+          </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <code id="share-code-text" style="flex:1;background:#edf2f7;padding:6px 8px;border-radius:6px;word-break:break-all;font-size:11px"></code>
-            <button onclick="copyShareCode()" style="padding:6px 10px;background:#c53030;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer">コピー</button>
+            <code id="share-code-text" style="flex:1;background:#fef3c7;padding:6px 8px;border-radius:6px;word-break:break-all;font-size:11px"></code>
+            <button onclick="copyShareCode()" style="padding:6px 12px;background:#c53030;color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">コピー</button>
           </div>
         </div>
       </div>
 
-      <!-- 共有コードで接続 -->
+      <!-- 共有コードで接続（スマホ用） -->
       <details style="font-size:13px">
-        <summary style="cursor:pointer;color:#1a202c;font-weight:600">🔗 共有コードで接続する</summary>
+        <summary style="cursor:pointer;color:#c53030;font-weight:700">📲 スマホ用：共有コードで接続する</summary>
+        <div style="margin-top:8px;background:#fff5f5;border-radius:8px;padding:10px;font-size:12px;color:#4a5568;line-height:1.7">
+          PCで表示した共有コードをここに貼り付けてください
+        </div>
         <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input type="text" id="share-code-input" placeholder="共有コードを貼り付け..."
             style="flex:1;min-width:200px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
@@ -981,22 +989,30 @@ const SYNC = {
     };
   },
 
-  // Gistがなければ新規作成
+  // Gistがなければ新規作成（現在のDBデータをアップロード）
+  _justCreated: false,
   async ensureBin() {
     if (this.bin) return true;
     try {
+      // 現在のDBデータを初期コンテンツとして使う
+      const currentData = JSON.stringify({
+        punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
+        hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
+        hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+      });
       const res = await fetch(this.BASE, {
         method: 'POST',
         headers: this.headers(),
         body: JSON.stringify({
           description: 'TimeKeeper データ',
           public: false,
-          files: { 'timekeeper-data.json': { content: JSON.stringify({ punches: [], shifts: [], hourlyRate: 0 }) } },
+          files: { 'timekeeper-data.json': { content: currentData } },
         }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.message || JSON.stringify(d));
       this.bin = d.id;
+      this._justCreated = true; // 新規作成フラグ（pullをスキップするため）
       return true;
     } catch(e) { console.warn('ensureBin failed:', e.message); return false; }
   },
@@ -1256,13 +1272,21 @@ function applyShareCode() {
 async function syncNow() {
   const status = document.getElementById('sync-status');
   if (status) status.textContent = '⏳ 同期中...';
-  // bin作成を試みてエラーを取得
+  // bin作成を試みる
   if (!SYNC.bin) {
     const created = await SYNC.ensureBin();
     if (!created) {
-      if (status) status.innerHTML = '❌ bin作成失敗<br><span style="font-size:11px">メール認証が完了しているか確認してください</span>';
+      if (status) status.innerHTML = '❌ Gist作成失敗<br><span style="font-size:11px">トークンの権限（gist）を確認してください</span>';
       return;
     }
+  }
+  // 新規作成直後はpullせず（空データで上書きを防ぐ）、pushのみ
+  if (SYNC._justCreated) {
+    SYNC._justCreated = false;
+    await SYNC.push();
+    if (status) status.textContent = '✅ 同期完了（新規）' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+    showToast('Gistを作成してデータをアップロードしました');
+    return;
   }
   const ok = await SYNC.pull();
   if (ok) {
