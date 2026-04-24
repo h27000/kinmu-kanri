@@ -602,63 +602,12 @@
 
   <!-- 打刻記録 -->
   <div class="card">
-    <h3>打刻記録</h3>
+    <div class="summary-header" style="margin-bottom:12px">
+      <h3>打刻記録</h3>
+      <select id="punch-month" onchange="renderPunchRecords()"></select>
+    </div>
     <div id="punch-records-container">
       <p class="empty-msg">記録がありません</p>
-    </div>
-  </div>
-
-  <!-- 時給設定 -->
-  <div class="card">
-    <h3>時給設定</h3>
-    <div style="display:flex;flex-direction:column;gap:14px">
-
-      <!-- 基本時給 -->
-      <div>
-        <div style="font-size:12px;color:#718096;margin-bottom:6px">基本時給（月別設定がない月に使用）</div>
-        <div class="wage-setting" style="margin:0">
-          <label>時給</label>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:15px;color:#4a5568">¥</span>
-            <input type="number" id="hourly-rate" min="0" max="99999" step="10" placeholder="1000" oninput="saveWage()">
-            <span style="font-size:13px;color:#718096">/ 時間</span>
-          </div>
-        </div>
-        <div class="wage-display" id="wage-display"></div>
-        <div style="font-size:12px;color:#1a202c;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
-      </div>
-
-      <!-- 交通費 -->
-      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
-        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">🚃 交通費設定</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <label style="font-size:13px;color:#4a5568;white-space:nowrap">1日あたり</label>
-          <div style="display:flex;align-items:center;gap:4px">
-            <span style="font-size:14px;color:#4a5568">¥</span>
-            <input type="number" id="transport-fee" min="0" max="99999" step="10" placeholder="500"
-              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
-              oninput="saveTransportFee()">
-          </div>
-          <span style="font-size:12px;color:#718096">（出勤日数×自動計算）</span>
-        </div>
-        <div id="transport-display" style="font-size:12px;color:#4a5568;margin-top:4px"></div>
-      </div>
-
-      <!-- 月別時給 -->
-      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
-        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">📅 月別時給設定</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="month" id="wage-month" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
-          <div style="display:flex;align-items:center;gap:4px">
-            <span style="font-size:14px;color:#4a5568">¥</span>
-            <input type="number" id="wage-month-rate" min="0" max="99999" step="10" placeholder="1000"
-              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
-          </div>
-          <button class="btn-primary" onclick="saveMonthlyRate()" style="white-space:nowrap">設定</button>
-        </div>
-        <div id="monthly-rates-list" style="margin-top:10px"></div>
-      </div>
-
     </div>
   </div>
 
@@ -768,9 +717,66 @@
   </div>
 
   <div class="card">
-    <h3>シフト一覧</h3>
+    <div class="summary-header" style="margin-bottom:12px">
+      <h3>シフト一覧</h3>
+      <select id="shift-month" onchange="renderShiftList()"></select>
+    </div>
     <div id="shift-list-container">
       <p class="empty-msg">シフトがありません</p>
+    </div>
+  </div>
+
+  <!-- 時給・交通費設定 -->
+  <div class="card">
+    <h3>時給設定</h3>
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- 基本時給 -->
+      <div>
+        <div style="font-size:12px;color:#718096;margin-bottom:6px">基本時給（月別設定がない月に使用）</div>
+        <div class="wage-setting" style="margin:0">
+          <label>時給</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px;color:#4a5568">¥</span>
+            <input type="number" id="hourly-rate" min="0" max="99999" step="10" placeholder="1000" oninput="saveWage()">
+            <span style="font-size:13px;color:#718096">/ 時間</span>
+          </div>
+        </div>
+        <div class="wage-display" id="wage-display"></div>
+        <div style="font-size:12px;color:#1a202c;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
+      </div>
+
+      <!-- 交通費 -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">🚃 交通費設定</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:13px;color:#4a5568;white-space:nowrap">1日あたり</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:14px;color:#4a5568">¥</span>
+            <input type="number" id="transport-fee" min="0" max="99999" step="10" placeholder="500"
+              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+              oninput="saveTransportFee()">
+          </div>
+          <span style="font-size:12px;color:#718096">（出勤日数×自動計算）</span>
+        </div>
+        <div id="transport-display" style="font-size:12px;color:#4a5568;margin-top:4px"></div>
+      </div>
+
+      <!-- 月別時給 -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">📅 月別時給設定</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="month" id="wage-month" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:14px;color:#4a5568">¥</span>
+            <input type="number" id="wage-month-rate" min="0" max="99999" step="10" placeholder="1000"
+              style="width:100px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+          </div>
+          <button class="btn-primary" onclick="saveMonthlyRate()" style="white-space:nowrap">設定</button>
+        </div>
+        <div id="monthly-rates-list" style="margin-top:10px"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1425,7 +1431,9 @@ function saveEditPunch(date) {
 
 function renderPunchRecords() {
   const container = document.getElementById('punch-records-container');
-  const punches = [...DB.punches].sort((a, b) => b.date.localeCompare(a.date));
+  const ym = document.getElementById('punch-month')?.value || '';
+  const allPunches = [...DB.punches].sort((a, b) => b.date.localeCompare(a.date));
+  const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
   const hasWage = DB.hourlyRate > 0;
@@ -1553,7 +1561,9 @@ function deleteShift(id) {
 
 function renderShiftList() {
   const container = document.getElementById('shift-list-container');
-  const shifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
+  const ym = document.getElementById('shift-month')?.value || '';
+  const allShifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
+  const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
   const DOWS = ['日','月','火','水','木','金','土'];
   const DOW_COLORS = { '日':'#e53e3e','土':'#3182ce' };
@@ -2010,6 +2020,21 @@ function renderSummaryCalendar(ym, days) {
   grid.innerHTML = html;
 }
 
+// ---- タブ用月セレクター共通初期化 ----
+function initTabMonthSelector(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const now = new Date();
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    sel.appendChild(opt);
+  }
+}
+
 // ---- 月次集計 ----
 function initMonthSelector() {
   const sel = document.getElementById('summary-month');
@@ -2314,6 +2339,8 @@ function migrateBreakTimes() {
   localStorage.setItem('wt_break_migrated_v3', '1');
 }
 
+initTabMonthSelector('punch-month');
+initTabMonthSelector('shift-month');
 initMonthSelector();
 initYearSelector();
 refreshPunchUI();
