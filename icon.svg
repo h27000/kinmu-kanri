@@ -1,49 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <defs>
-    <radialGradient id="bg" cx="45%" cy="38%" r="65%">
-      <stop offset="0%" stop-color="#a01414"/>
-      <stop offset="100%" stop-color="#5a0808"/>
-    </radialGradient>
-    <radialGradient id="face" cx="38%" cy="32%" r="72%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#fff0f0"/>
-    </radialGradient>
-  </defs>
-
-  <!-- Rounded background -->
-  <rect width="192" height="192" rx="38" fill="url(#bg)"/>
-  <rect width="192" height="192" rx="38" fill="none" stroke="#c53030" stroke-width="2.5" opacity="0.5"/>
-
-  <!-- Clock shadow for depth -->
-  <circle cx="97" cy="99" r="68" fill="#2d0000" opacity="0.2"/>
-  <!-- Clock face -->
-  <circle cx="96" cy="96" r="68" fill="url(#face)"/>
-  <!-- Clock rim -->
-  <circle cx="96" cy="96" r="68" fill="none" stroke="#c53030" stroke-width="4.5"/>
-
-  <!-- Major tick marks (12, 3, 6, 9) -->
-  <line x1="96" y1="28" x2="96" y2="43"  stroke="#e57070" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="164" y1="96" x2="149" y2="96" stroke="#e57070" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="96" y1="164" x2="96" y2="149" stroke="#e57070" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="28" y1="96" x2="43" y2="96"  stroke="#e57070" stroke-width="4.5" stroke-linecap="round"/>
-
-  <!-- Rosy cheeks (kawaii!) -->
-  <circle cx="67" cy="110" r="12" fill="#ff8080" opacity="0.30"/>
-  <circle cx="125" cy="110" r="12" fill="#ff8080" opacity="0.30"/>
-
-  <!-- Eyes (cute dot style) -->
-  <circle cx="76" cy="82" r="6" fill="#7b1111"/>
-  <circle cx="116" cy="82" r="6" fill="#7b1111"/>
-  <!-- Eye shine -->
-  <circle cx="78" cy="80" r="2" fill="white"/>
-  <circle cx="118" cy="80" r="2" fill="white"/>
-
-  <!-- Hour hand — 10:10 hour at 305° length 42 (forms left side of smile) -->
-  <line x1="96" y1="96" x2="61" y2="72" stroke="#7b1111" stroke-width="8" stroke-linecap="round"/>
-  <!-- Minute hand — 10:10 minute at 60° length 53 (forms right side of smile) -->
-  <line x1="96" y1="96" x2="142" y2="70" stroke="#7b1111" stroke-width="6" stroke-linecap="round"/>
-
-  <!-- Center cap -->
-  <circle cx="96" cy="96" r="8" fill="#c53030"/>
-  <circle cx="96" cy="96" r="4" fill="white"/>
+  <!-- 背景 -->
+  <rect width="192" height="192" rx="42" fill="#8B0000"/>
+  <!-- 光沢 -->
+  <rect width="192" height="96" rx="42" fill="white" opacity=".04"/>
+  <!-- 外リング -->
+  <circle cx="96" cy="96" r="66" fill="none" stroke="#FF4444" stroke-width="2" opacity=".4"/>
+  <!-- 文字盤 -->
+  <circle cx="96" cy="96" r="54" fill="#6B0000"/>
+  <!-- 目盛り（4点） -->
+  <line x1="96" y1="44" x2="96" y2="57" stroke="#FF6666" stroke-width="5" stroke-linecap="round"/>
+  <line x1="96" y1="135" x2="96" y2="148" stroke="#FF6666" stroke-width="5" stroke-linecap="round"/>
+  <line x1="44" y1="96" x2="57" y2="96" stroke="#FF6666" stroke-width="5" stroke-linecap="round"/>
+  <line x1="135" y1="96" x2="148" y2="96" stroke="#FF6666" stroke-width="5" stroke-linecap="round"/>
+  <!-- 分針（細く長い・白） -->
+  <line x1="96" y1="96" x2="96" y2="50" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- 時針（太く短い・白） -->
+  <line x1="96" y1="96" x2="123" y2="83" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <!-- 中心点 -->
+  <circle cx="96" cy="96" r="6" fill="#FF4444"/>
 </svg>
