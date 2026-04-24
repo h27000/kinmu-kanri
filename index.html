@@ -978,14 +978,14 @@ const SYNC = {
     try {
       const res = await fetch(this.BASE, {
         method: 'POST',
-        headers: { ...this.headers(), 'X-Bin-Name': '勤務記録', 'X-Bin-Private': 'true' },
+        headers: { ...this.headers(), 'X-Bin-Name': 'TimeKeeper' },
         body: JSON.stringify({ punches: [], shifts: [], hourlyRate: 0 }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.message || JSON.stringify(d));
       this.bin = d.metadata.id;
       return true;
-    } catch(e) { console.warn('ensureBin failed:', e); return false; }
+    } catch(e) { console.warn('ensureBin failed:', e.message); return false; }
   },
 
   // クラウドからデータを取得してlocalStorageを上書き
@@ -1227,7 +1227,15 @@ function applyShareCode() {
 
 async function syncNow() {
   const status = document.getElementById('sync-status');
-  if (status) status.textContent = '同期中...';
+  if (status) status.textContent = '⏳ 同期中...';
+  // bin作成を試みてエラーを取得
+  if (!SYNC.bin) {
+    const created = await SYNC.ensureBin();
+    if (!created) {
+      if (status) status.innerHTML = '❌ bin作成失敗<br><span style="font-size:11px">メール認証が完了しているか確認してください</span>';
+      return;
+    }
+  }
   const ok = await SYNC.pull();
   if (ok) {
     if (status) status.textContent = '✅ 同期完了 ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
@@ -1237,7 +1245,7 @@ async function syncNow() {
     renderAnnual();
     showToast('同期完了しました');
   } else {
-    if (status) status.textContent = SYNC.key ? '❌ 同期失敗（APIキーを確認してください）' : 'APIキーが未設定です';
+    if (status) status.innerHTML = '❌ 同期失敗<br><span style="font-size:11px">APIキーかネット接続を確認してください</span>';
   }
 }
 
