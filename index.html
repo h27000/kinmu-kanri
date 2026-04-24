@@ -665,13 +665,18 @@
   <div class="card">
     <h3>💾 バックアップ・復元</h3>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div style="font-size:13px;color:#4a5568">全データをJSONファイルで保存・復元できます。機種変更や万が一のデータ消失対策に。</div>
+      <div style="font-size:13px;color:#4a5568">毎日自動でバックアップを保存します（過去7日分）。</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button onclick="exportBackup()" style="padding:10px 18px;background:#f0fff4;border:1px solid #9ae6b4;color:#276749;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">📤 バックアップを作成</button>
+        <button onclick="exportBackup()" style="padding:10px 18px;background:#f0fff4;border:1px solid #9ae6b4;color:#276749;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">📤 今すぐ保存</button>
         <label style="padding:10px 18px;background:#fff5f5;border:1px solid #fc8181;color:#1a202c;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
-          📥 データを復元
+          📥 ファイルから復元
           <input type="file" id="restore-file" accept=".json" style="display:none" onchange="importBackup(event)">
         </label>
+      </div>
+      <!-- 自動バックアップ一覧 -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#4a5568;margin-bottom:6px">🕐 自動バックアップ（過去7日）</div>
+        <div id="auto-backup-list" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
       <div id="backup-status" style="font-size:12px;color:#718096"></div>
     </div>
@@ -1199,10 +1204,16 @@ function updateSyncUI() {
 async function saveJbKey() {
   const key = document.getElementById('jb-key-input').value.trim();
   if (!key) { showToast('APIキーを入力してください'); return; }
+  // ⚠️ 同期前にバックアップを強く推奨
+  const hasPunches = DB.punches.length > 0 || DB.shifts.length > 0;
+  if (hasPunches) {
+    const ok = confirm('⚠️ 同期を設定する前に必ずバックアップを作成してください。\n\n「キャンセル」でバックアップ画面へ戻る\n「OK」でそのまま同期設定を続ける');
+    if (!ok) return;
+  }
   SYNC.key = key;
   SYNC.bin = ''; // binをリセットして次回自動作成
   updateSyncUI();
-  // すぐ同期を試みる
+  // すぐ同期を試みる（新規Gist作成→現在のデータをアップロード）
   await syncNow();
 }
 
@@ -1264,6 +1275,70 @@ async function syncNow() {
   } else {
     if (status) status.innerHTML = '❌ 同期失敗<br><span style="font-size:11px">APIキーかネット接続を確認してください</span>';
   }
+}
+
+// ---- 自動バックアップ ----
+const AUTO_BACKUP_PREFIX = 'wt_autobackup_';
+const AUTO_BACKUP_DAYS   = 7;
+
+function saveAutoBackup() {
+  const today = todayStr();
+  const data = JSON.stringify({
+    savedAt: new Date().toISOString(),
+    punches: DB.punches, shifts: DB.shifts,
+    hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates,
+    transportFee: DB.transportFee, hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+  });
+  localStorage.setItem(AUTO_BACKUP_PREFIX + today, data);
+  // 古いバックアップを削除（7日より前）
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(AUTO_BACKUP_PREFIX));
+  keys.sort().reverse().slice(AUTO_BACKUP_DAYS).forEach(k => localStorage.removeItem(k));
+  renderAutoBackupList();
+}
+
+function renderAutoBackupList() {
+  const container = document.getElementById('auto-backup-list');
+  if (!container) return;
+  const keys = Object.keys(localStorage)
+    .filter(k => k.startsWith(AUTO_BACKUP_PREFIX))
+    .sort().reverse();
+  if (!keys.length) {
+    container.innerHTML = '<div style="font-size:12px;color:#a0aec0">まだ自動バックアップがありません</div>';
+    return;
+  }
+  container.innerHTML = keys.map(k => {
+    const date = k.replace(AUTO_BACKUP_PREFIX, '');
+    const d = JSON.parse(localStorage.getItem(k));
+    const count = (d.punches?.length || 0) + (d.shifts?.length || 0);
+    const isToday = date === todayStr();
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f7fafc;border-radius:8px;border:1px solid #e2e8f0">
+      <div>
+        <span style="font-size:13px;font-weight:600;color:#1a202c">${date}${isToday ? ' <span style="font-size:10px;color:#c53030">今日</span>' : ''}</span>
+        <span style="font-size:11px;color:#718096;margin-left:8px">${count}件のデータ</span>
+      </div>
+      <button onclick="restoreAutoBackup('${k}')" style="padding:5px 12px;background:#fff0f0;border:1px solid #fc8181;color:#c53030;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">復元</button>
+    </div>`;
+  }).join('');
+}
+
+function restoreAutoBackup(key) {
+  if (!confirm(`${key.replace(AUTO_BACKUP_PREFIX,'')} のバックアップから復元しますか？\n現在のデータは上書きされます。`)) return;
+  const d = JSON.parse(localStorage.getItem(key));
+  if (!d) { showToast('バックアップが見つかりません'); return; }
+  if (Array.isArray(d.punches))  DB.punches  = d.punches;
+  if (Array.isArray(d.shifts))   DB.shifts   = d.shifts;
+  if (d.hourlyRate !== undefined) DB.hourlyRate   = d.hourlyRate;
+  if (d.hourlyRates) DB.hourlyRates = d.hourlyRates;
+  if (d.transportFee !== undefined) DB.transportFee = d.transportFee;
+  if (d.hireDate)    DB.hireDate   = d.hireDate;
+  if (Array.isArray(d.leaveUsed)) DB.leaveUsed = d.leaveUsed;
+  SYNC.push();
+  refreshPunchUI();
+  renderShiftList();
+  renderSummary();
+  renderAnnual();
+  showToast('自動バックアップから復元しました');
+  document.getElementById('backup-status').textContent = `✅ ${key.replace(AUTO_BACKUP_PREFIX,'')} のバックアップから復元しました`;
 }
 
 // ---- バックアップ・復元 ----
@@ -1375,6 +1450,7 @@ function punchIn() {
   punches.push({ date: today, in: fmtTime(now), out: null });
   DB.punches = punches;
   SYNC.push();
+  saveAutoBackup();
   showToast(`出勤打刻: ${fmtTime(now)}`);
   refreshPunchUI();
 }
@@ -1388,6 +1464,7 @@ function punchOut() {
   punch.out = fmtTime(now);
   DB.punches = punches;
   SYNC.push();
+  saveAutoBackup();
   showToast(`退勤打刻: ${fmtTime(now)}`);
   refreshPunchUI();
 }
@@ -1569,6 +1646,7 @@ function addShift() {
   shifts.push({ id: Date.now(), date, start, end, break: brk, work: workMins, memo });
   DB.shifts = shifts;
   SYNC.push();
+  saveAutoBackup();
   showToast('シフトを追加しました');
   document.getElementById('shift-start').value = 9;
   document.getElementById('shift-end').value   = 18;
@@ -2370,6 +2448,9 @@ initMonthSelector();
 initYearSelector();
 refreshPunchUI();
 renderShiftList();
+// 起動時に自動バックアップ保存＆一覧表示
+saveAutoBackup();
+renderAutoBackupList();
 
 // 同期UI初期化
 updateSyncUI();
