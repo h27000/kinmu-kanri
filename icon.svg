@@ -1,25 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
   <!-- 背景 -->
-  <rect width="192" height="192" rx="36" fill="#CC0000"/>
+  <rect width="192" height="192" rx="36" fill="#AA0000"/>
   <!-- レシート本体 -->
   <rect x="38" y="24" width="116" height="144" rx="6" fill="white"/>
   <!-- タイトル -->
-  <text x="96" y="50" font-family="'Hiragino Sans',sans-serif" font-weight="700" font-size="12" fill="#CC0000" text-anchor="middle">★ 給与明細 ★</text>
+  <text x="96" y="50" font-family="'Hiragino Sans',sans-serif" font-weight="700" font-size="12" fill="#AA0000" text-anchor="middle">★ 給与明細 ★</text>
   <line x1="46" y1="56" x2="146" y2="56" stroke="#ddd" stroke-width="1.2" stroke-dasharray="4,2"/>
   <!-- 明細行 -->
   <text x="50" y="71" font-size="10" font-family="'Hiragino Sans',sans-serif" fill="#666">基本給</text>
-  <text x="142" y="71" font-size="10" font-family="Arial,sans-serif" fill="#CC0000" text-anchor="end">200,000</text>
+  <text x="142" y="71" font-size="10" font-family="Arial,sans-serif" fill="#AA0000" text-anchor="end">200,000</text>
   <text x="50" y="86" font-size="10" font-family="'Hiragino Sans',sans-serif" fill="#666">残業代</text>
-  <text x="142" y="86" font-size="10" font-family="Arial,sans-serif" fill="#CC0000" text-anchor="end">15,000</text>
+  <text x="142" y="86" font-size="10" font-family="Arial,sans-serif" fill="#AA0000" text-anchor="end">15,000</text>
   <text x="50" y="101" font-size="10" font-family="'Hiragino Sans',sans-serif" fill="#666">交通費</text>
-  <text x="142" y="101" font-size="10" font-family="Arial,sans-serif" fill="#CC0000" text-anchor="end">10,000</text>
+  <text x="142" y="101" font-size="10" font-family="Arial,sans-serif" fill="#AA0000" text-anchor="end">10,000</text>
   <line x1="46" y1="107" x2="146" y2="107" stroke="#ddd" stroke-width="1.2" stroke-dasharray="4,2"/>
   <text x="50" y="121" font-size="10" font-family="'Hiragino Sans',sans-serif" fill="#888">控除</text>
   <text x="142" y="121" font-size="10" font-family="Arial,sans-serif" fill="#888" text-anchor="end">-30,000</text>
-  <line x1="46" y1="128" x2="146" y2="128" stroke="#CC0000" stroke-width="2"/>
+  <line x1="46" y1="128" x2="146" y2="128" stroke="#AA0000" stroke-width="2"/>
   <!-- 合計 -->
-  <text x="50" y="144" font-size="11" font-family="'Hiragino Sans',sans-serif" font-weight="700" fill="#CC0000">合　計</text>
-  <text x="142" y="144" font-size="13" font-family="Arial,sans-serif" font-weight="700" fill="#CC0000" text-anchor="end">195,000</text>
+  <text x="50" y="144" font-size="11" font-family="'Hiragino Sans',sans-serif" font-weight="700" fill="#AA0000">合　計</text>
+  <text x="142" y="144" font-size="13" font-family="Arial,sans-serif" font-weight="700" fill="#AA0000" text-anchor="end">195,000</text>
   <!-- フッター -->
   <text x="96" y="158" font-size="8" font-family="'Hiragino Sans',sans-serif" fill="#aaa" text-anchor="middle">ありがとうございます</text>
 </svg>
