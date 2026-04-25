@@ -1636,19 +1636,23 @@ function renderPunchRecords() {
 // ---- シフト ----
 // 時刻セレクトのオプション生成（0〜23時）
 (function initShiftSelects() {
-  const hours = Array.from({length: 24}, (_, i) => i);
-  ['shift-start', 'shift-end'].forEach(id => {
-    const sel = document.getElementById(id);
-    hours.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = h;
-      opt.textContent = `${h}:00`;
-      sel.appendChild(opt);
-    });
-  });
+  const startSel = document.getElementById('shift-start');
+  const endSel   = document.getElementById('shift-end');
+  // 開始: 9〜18時
+  for (let h = 9; h <= 18; h++) {
+    const opt = document.createElement('option');
+    opt.value = h; opt.textContent = `${h}:00`;
+    startSel.appendChild(opt);
+  }
+  // 終了: 12〜21時
+  for (let h = 12; h <= 21; h++) {
+    const opt = document.createElement('option');
+    opt.value = h; opt.textContent = `${h}:00`;
+    endSel.appendChild(opt);
+  }
   // デフォルト値
   document.getElementById('shift-start').value = 9;
-  document.getElementById('shift-end').value   = 18;
+  document.getElementById('shift-end').value   = 15;
 })();
 
 function autoFillBreak() {
@@ -1682,7 +1686,7 @@ function addShift() {
   saveAutoBackup();
   showToast('シフトを追加しました');
   document.getElementById('shift-start').value = 9;
-  document.getElementById('shift-end').value   = 18;
+  document.getElementById('shift-end').value   = 15;
   document.getElementById('shift-memo').value  = '';
   renderShiftList();
 }
