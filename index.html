@@ -591,7 +591,7 @@
     <div class="punch-main">
       <h2>本日の日付</h2>
       <div class="today" id="today-date">--</div>
-      <div id="clock" style="font-size:32px;font-weight:700;letter-spacing:3px;font-variant-numeric:tabular-nums;color:#1a202c;margin:4px 0 12px"></div>
+      <div id="clock" style="font-size:32px;font-weight:700;letter-spacing:3px;font-family:'Helvetica Neue',Arial,sans-serif;font-variant-numeric:tabular-nums;color:#1a202c;margin:4px 0 12px"></div>
       <div class="punch-buttons">
         <button class="btn-in" id="btn-in" onclick="punchIn()">出勤</button>
         <button class="btn-out" id="btn-out" onclick="punchOut()">退勤</button>
@@ -1642,7 +1642,7 @@ function renderPunchRecords() {
     hours.forEach(h => {
       const opt = document.createElement('option');
       opt.value = h;
-      opt.textContent = `${h}時`;
+      opt.textContent = `${h}:00`;
       sel.appendChild(opt);
     });
   });
