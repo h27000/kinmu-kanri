@@ -760,6 +760,14 @@
     </div>
   </div>
 
+  <!-- 週次サマリー（月内） -->
+  <div class="card">
+    <h3>📆 週次サマリー</h3>
+    <div id="summary-weekly-container">
+      <p class="empty-msg">データがありません</p>
+    </div>
+  </div>
+
   <!-- 給与明細 -->
   <div class="payslip" id="payslip-card">
     <div class="payslip-header">
@@ -2098,6 +2106,99 @@ function renderWeekly() {
   container.innerHTML = html || '<p class="empty-msg">データがありません</p>';
 }
 
+// ---- 週次サマリー（月次集計内） ----
+function renderSummaryWeekly(ym) {
+  const container = document.getElementById('summary-weekly-container');
+  const punches = DB.punches;
+  const shifts  = DB.shifts;
+
+  // 選択月に1日でも含まれる週を収集
+  const [y, m] = ym.split('-').map(Number);
+  const firstDay = new Date(y, m - 1, 1);
+  const lastDay  = new Date(y, m, 0);
+  const weekStarts = new Map();
+
+  // その月の各日の週を登録
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    const ws = getWeekStart(new Date(d));
+    const key = dateToStr(ws);
+    if (!weekStarts.has(key)) weekStarts.set(key, new Date(ws));
+  }
+
+  if (!weekStarts.size) {
+    container.innerHTML = '<p class="empty-msg">データがありません</p>';
+    return;
+  }
+
+  const weeks = [...weekStarts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const DOW = ['日','月','火','水','木','金','土'];
+  const hasWage  = DB.hourlyRate > 0 || Object.keys(DB.hourlyRates).length > 0;
+  const hasTrans = DB.transportFee > 0;
+  const todayStr2 = todayStr();
+
+  let html = '';
+  for (const [wsKey, wsDate] of weeks) {
+    const weDate = new Date(wsDate);
+    weDate.setDate(weDate.getDate() + 6);
+
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(wsDate);
+      d.setDate(d.getDate() + i);
+      weekDates.push(dateToStr(d));
+    }
+
+    let actualMins = 0, plannedMins = 0, workedDays = 0;
+    for (const date of weekDates) {
+      const p  = punches.find(x => x.date === date);
+      const ss = shifts.filter(x => x.date === date);
+      if (p) { const m2 = calcPunchMinutes(p); actualMins += m2; if (m2 > 0 || p.in) workedDays++; }
+      if (ss.length) plannedMins += ss.reduce((a, s) => a + s.work, 0);
+    }
+
+    const wage      = hasWage  ? calcWage(actualMins, ym) : null;
+    const transport = hasTrans && workedDays > 0 ? DB.transportFee * workedDays : null;
+
+    const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+    const rangeLabel = `${fmt(wsDate)}(月) 〜 ${fmt(weDate)}(日)`;
+    const isCurrentWeek = weekDates.includes(todayStr2);
+
+    const dayChips = weekDates.map((date, i) => {
+      const dow = i + 1;
+      const realDow = dow === 7 ? 0 : dow;
+      const hasPunch = punches.find(x => x.date === date);
+      const hasShift = shifts.find(x => x.date === date);
+      const inMonth  = date.startsWith(ym);
+      let cls = 'week-day-chip';
+      if (realDow === 0) cls += ' sun';
+      else if (realDow === 6) cls += ' sat';
+      if (!inMonth) cls += ' off'; // 月外はグレー
+      else if (hasPunch) cls += ' worked';
+      else if (hasShift) cls += ' planned';
+      else cls += ' off';
+      return `<span class="${cls}">${DOW[realDow]}</span>`;
+    }).join('');
+
+    html += `
+    <div class="week-card">
+      <div class="week-card-header">
+        <div class="week-range">${rangeLabel}</div>
+        <span class="week-badge ${isCurrentWeek ? 'current' : 'past'}">${isCurrentWeek ? '今週' : '終了'}</span>
+      </div>
+      <div class="week-grid">
+        <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div>
+        <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value">${actualMins ? (actualMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
+        <div class="week-cell"><div class="wc-label">予定</div><div class="wc-value">${plannedMins ? (plannedMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
+        ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div>` : ''}
+        ${hasTrans ? `<div class="week-cell"><div class="wc-label">交通費</div><div class="wc-value" style="font-size:14px">${transport !== null ? '¥'+transport.toLocaleString() : '-'}</div></div>` : ''}
+      </div>
+      <div class="week-days-row">${dayChips}</div>
+    </div>`;
+  }
+
+  container.innerHTML = html || '<p class="empty-msg">データがありません</p>';
+}
+
 // ---- カレンダー（月次集計内） ----
 function renderSummaryCalendar(ym, days) {
   const grid = document.getElementById('summary-cal-grid');
@@ -2226,6 +2327,9 @@ function renderSummary() {
 
   // カレンダー描画
   renderSummaryCalendar(ym, days);
+
+  // 週次サマリー描画
+  renderSummaryWeekly(ym);
 
   // 給与明細を描画
   renderPayslip(ym, workedDays, sortedDates, days);
