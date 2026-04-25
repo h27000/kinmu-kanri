@@ -2,11 +2,7 @@
   <!-- 背景 -->
   <rect width="192" height="192" rx="36" fill="#CC0000"/>
   <!-- レシート本体 -->
-  <rect x="38" y="20" width="116" height="152" rx="4" fill="white"/>
-  <!-- ギザギザ上 -->
-  <polygon points="38,20 48,32 58,20 68,32 78,20 88,32 98,20 108,32 118,20 128,32 138,20 148,32 154,20" fill="#CC0000"/>
-  <!-- ギザギザ下 -->
-  <polygon points="38,172 48,160 58,172 68,160 78,172 88,160 98,172 108,160 118,172 128,160 138,172 148,160 154,172" fill="#CC0000"/>
+  <rect x="38" y="24" width="116" height="144" rx="6" fill="white"/>
   <!-- タイトル -->
   <text x="96" y="50" font-family="'Hiragino Sans',sans-serif" font-weight="700" font-size="12" fill="#CC0000" text-anchor="middle">★ 給与明細 ★</text>
   <line x1="46" y1="56" x2="146" y2="56" stroke="#ddd" stroke-width="1.2" stroke-dasharray="4,2"/>
