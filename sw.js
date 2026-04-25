@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kinmu-kanri-v1';
+const CACHE_NAME = 'kinmu-kanri-v2';
 const ASSETS = [
   '/kinmu-kanri/',
   '/kinmu-kanri/index.html',
