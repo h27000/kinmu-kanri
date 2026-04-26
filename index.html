@@ -304,6 +304,7 @@
     text-align: center;
   }
   .stat-box .label { font-size: 11px; color: #718096; font-weight: 600; margin-bottom: 6px; }
+  .stat-box .value-row { display: flex; align-items: baseline; gap: 3px; }
   .stat-box .value { font-size: 22px; font-weight: 700; color: #1a202c; font-variant-numeric: tabular-nums; }
   .stat-box .unit { font-size: 12px; color: #718096; }
   .stat-box.highlight { background: #fff5f5; border: 1px solid #fed7d7; }
@@ -733,12 +734,12 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-box"><div class="label">実労働時間</div><div class="value" id="stat-actual">--</div><div class="unit">h:mm</div></div>
-    <div class="stat-box"><div class="label">予定時間</div><div class="value" id="stat-planned">--</div><div class="unit">h:mm</div></div>
-    <div class="stat-box"><div class="label">出勤日数</div><div class="value" id="stat-days">--</div><div class="unit">日</div></div>
-    <div class="stat-box"><div class="label">平均勤務</div><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div>
-    <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
-    <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
+    <div class="stat-box"><div class="label">実労働時間</div><div class="value-row"><div class="value" id="stat-actual">--</div><div class="unit">h:mm</div></div></div>
+    <div class="stat-box"><div class="label">予定時間</div><div class="value-row"><div class="value" id="stat-planned">--</div><div class="unit">h:mm</div></div></div>
+    <div class="stat-box"><div class="label">出勤日数</div><div class="value-row"><div class="value" id="stat-days">--</div><div class="unit">日</div></div></div>
+    <div class="stat-box"><div class="label">平均勤務</div><div class="value-row"><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div></div>
+    <div class="stat-box"><div class="label">交通費合計</div><div class="value-row"><div class="value" id="stat-transport">--</div><div class="unit">円</div></div></div>
+    <div class="stat-box highlight"><div class="label">月間給与</div><div class="value-row"><div class="value" id="stat-wage">--</div><div class="unit">円</div></div></div>
   </div>
 
 
@@ -785,12 +786,12 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value" id="ann-actual">--</div><div class="unit">h:mm</div></div>
-    <div class="stat-box"><div class="label">年間予定時間</div><div class="value" id="ann-planned">--</div><div class="unit">h:mm</div></div>
-    <div class="stat-box"><div class="label">年間出勤日数</div><div class="value" id="ann-days">--</div><div class="unit">日</div></div>
-    <div class="stat-box"><div class="label">月平均実働</div><div class="value" id="ann-avg">--</div><div class="unit">h:mm/月</div></div>
-    <div class="stat-box"><div class="label">年間交通費</div><div class="value" id="ann-transport">--</div><div class="unit">円</div></div>
-    <div class="stat-box highlight"><div class="label">年間給与</div><div class="value" id="ann-wage">--</div><div class="unit">円</div></div>
+    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value-row"><div class="value" id="ann-actual">--</div><div class="unit">h:mm</div></div></div>
+    <div class="stat-box"><div class="label">年間予定時間</div><div class="value-row"><div class="value" id="ann-planned">--</div><div class="unit">h:mm</div></div></div>
+    <div class="stat-box"><div class="label">年間出勤日数</div><div class="value-row"><div class="value" id="ann-days">--</div><div class="unit">日</div></div></div>
+    <div class="stat-box"><div class="label">月平均実働</div><div class="value-row"><div class="value" id="ann-avg">--</div><div class="unit">h:mm/月</div></div></div>
+    <div class="stat-box"><div class="label">年間交通費</div><div class="value-row"><div class="value" id="ann-transport">--</div><div class="unit">円</div></div></div>
+    <div class="stat-box highlight"><div class="label">年間給与</div><div class="value-row"><div class="value" id="ann-wage">--</div><div class="unit">円</div></div></div>
   </div>
 
   <div class="bar-chart">
