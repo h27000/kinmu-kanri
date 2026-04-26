@@ -1723,7 +1723,7 @@ function deleteShift(id) {
 function renderShiftList() {
   const container = document.getElementById('shift-list-container');
   const ym = document.getElementById('shift-month')?.value || '';
-  const allShifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
+  const allShifts = [...DB.shifts].sort((a, b) => a.date.localeCompare(b.date));
   const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
   const DOWS = ['日','月','火','水','木','金','土'];
