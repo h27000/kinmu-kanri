@@ -1102,7 +1102,7 @@ function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = fmtTime(now);
   document.getElementById('today-date').textContent =
-    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 (${['日','月','火','水','木','金','土'][now.getDay()]})`;
+    `${now.getMonth()+1}月${now.getDate()}日 (${['日','月','火','水','木','金','土'][now.getDay()]})`;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -2451,7 +2451,7 @@ function renderAnnual() {
         <div class="bar-track"><div class="bar-fill-actual" style="width:${aW}%"></div></div>
         <div class="bar-track"><div class="bar-fill-planned" style="width:${pW}%"></div></div>
       </div>
-      <div class="bar-label">${actualMins ? minutesToH(actualMins)+'h' : '-'}${wStr !== null ? ' / '+fmtWage(wStr) : ''}</div>
+      <div class="bar-label">${actualMins ? minutesToHM(actualMins) : '-'}${wStr !== null ? ' / '+fmtWage(wStr) : ''}</div>
     </div>`;
   }).join('');
 
