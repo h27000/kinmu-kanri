@@ -2104,7 +2104,7 @@ function renderWeekly() {
       <div class="week-grid">
         <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value-row"><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div></div>
         <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value-row"><div class="wc-value">${actualMins ? minutesToHM(actualMins) : '-'}</div>${actualMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
-        <div class="week-cell"><div class="wc-label">予定</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        <div class="week-cell"><div class="wc-label">シフト</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
         ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value-row"><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div></div>` : '<div class="week-cell"></div>'}
       </div>
       <div class="week-days-row">${dayChips}</div>
@@ -2196,7 +2196,7 @@ function renderSummaryWeekly(ym) {
       <div class="week-grid">
         <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value-row"><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div></div>
         <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value-row"><div class="wc-value">${actualMins ? minutesToHM(actualMins) : '-'}</div>${actualMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
-        <div class="week-cell"><div class="wc-label">予定</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        <div class="week-cell"><div class="wc-label">シフト</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
         ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value-row"><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div></div>` : '<div class="week-cell"></div>'}
       </div>
       <div class="week-days-row">${dayChips}</div>
