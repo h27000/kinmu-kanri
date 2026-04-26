@@ -733,8 +733,8 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-box"><div class="label">実労働時間</div><div class="value" id="stat-actual">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">予定時間</div><div class="value" id="stat-planned">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">実労働時間</div><div class="value" id="stat-actual">--</div><div class="unit">h:mm</div></div>
+    <div class="stat-box"><div class="label">予定時間</div><div class="value" id="stat-planned">--</div><div class="unit">h:mm</div></div>
     <div class="stat-box"><div class="label">出勤日数</div><div class="value" id="stat-days">--</div><div class="unit">日</div></div>
     <div class="stat-box"><div class="label">平均勤務</div><div class="value" id="stat-avg">--</div><div class="unit">時間/日</div></div>
     <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
@@ -785,8 +785,8 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value" id="ann-actual">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">年間予定時間</div><div class="value" id="ann-planned">--</div><div class="unit">時間</div></div>
+    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value" id="ann-actual">--</div><div class="unit">h:mm</div></div>
+    <div class="stat-box"><div class="label">年間予定時間</div><div class="value" id="ann-planned">--</div><div class="unit">h:mm</div></div>
     <div class="stat-box"><div class="label">年間出勤日数</div><div class="value" id="ann-days">--</div><div class="unit">日</div></div>
     <div class="stat-box"><div class="label">月平均実働</div><div class="value" id="ann-avg">--</div><div class="unit">時間/月</div></div>
     <div class="stat-box"><div class="label">年間交通費</div><div class="value" id="ann-transport">--</div><div class="unit">円</div></div>
@@ -2312,8 +2312,8 @@ function renderSummary() {
 
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * workedDays : null;
 
-  document.getElementById('stat-actual').textContent    = minutesToH(totalActual);
-  document.getElementById('stat-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('stat-actual').textContent    = minutesToHM(totalActual);
+  document.getElementById('stat-planned').textContent   = minutesToHM(totalPlanned);
   document.getElementById('stat-days').textContent      = workedDays;
   document.getElementById('stat-avg').textContent       = workedDays > 0 ? (totalActual / 60 / workedDays).toFixed(1) : '0.0';
   document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
@@ -2448,8 +2448,8 @@ function renderAnnual() {
 
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * totalDays : null;
 
-  document.getElementById('ann-actual').textContent    = minutesToH(totalActual);
-  document.getElementById('ann-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('ann-actual').textContent    = minutesToHM(totalActual);
+  document.getElementById('ann-planned').textContent   = minutesToHM(totalPlanned);
   document.getElementById('ann-days').textContent      = totalDays;
   document.getElementById('ann-avg').textContent       = activeMonths > 0 ? (totalActual / 60 / activeMonths).toFixed(1) : '0.0';
   document.getElementById('ann-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
