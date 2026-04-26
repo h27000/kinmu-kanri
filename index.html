@@ -1573,7 +1573,7 @@ function renderPunchRecords() {
   const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
-  const hasWage = DB.hourlyRate > 0;
+  const hasWage = DB.hourlyRate > 0 || Object.keys(DB.hourlyRates).length > 0;
   let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>実働</th>${hasWage ? '<th>給与</th>' : ''}<th></th></tr></thead><tbody>`;
 
   for (const p of punches) {
@@ -2467,7 +2467,7 @@ function renderAnnual() {
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
-  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>月</th><th>出勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
     const diff = actualMins - plannedMins;
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
@@ -2476,10 +2476,10 @@ function renderAnnual() {
     const wage = calcMonthWage(mym);
     html += `<tr>
       <td>${m}月</td>
+      <td>${workedDays > 0 ? workedDays : '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
-      <td>${workedDays > 0 ? workedDays : '-'}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
     </tr>`;
   }
@@ -2488,10 +2488,10 @@ function renderAnnual() {
     `<span style="color:${totalDiff>0?'#276749':'#AA0000'};font-weight:600">${totalDiff>0?'+':''}${minutesToHM(totalDiff)}</span>`;
   html += `<tr style="font-weight:700;background:#f7fafc">
     <td>合計</td>
+    <td>${totalDays > 0 ? totalDays : '-'}</td>
     <td>${totalActual ? '<span class="badge badge-blue">'+minutesToHM(totalActual)+'</span>' : '-'}</td>
     <td>${totalPlanned ? minutesToHM(totalPlanned) : '-'}</td>
     <td>${totalDiffStr}</td>
-    <td>${totalDays > 0 ? totalDays : '-'}</td>
     ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td>` : ''}
   </tr>`;
   html += '</tbody></table>';
