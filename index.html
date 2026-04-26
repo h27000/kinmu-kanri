@@ -1069,6 +1069,11 @@ function minutesToHM(m) {
   const min = Math.abs(m) % 60;
   return `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
 }
+function minutesToHMShort(m) {
+  const h = Math.floor(Math.abs(m) / 60);
+  const min = Math.abs(m) % 60;
+  return min === 0 ? `${m < 0 ? '-' : ''}${h}` : `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
+}
 function minutesToH(m) { return (m / 60).toFixed(1); }
 function dowSpan(dow) {
   const c = dow === '日' ? '#e53e3e' : dow === '土' ? '#3182ce' : '';
@@ -2296,7 +2301,7 @@ function renderSummary() {
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * workedDays : null;
 
   document.getElementById('stat-actual').textContent    = minutesToHM(totalActual);
-  document.getElementById('stat-planned').textContent   = minutesToHM(totalPlanned);
+  document.getElementById('stat-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('stat-days').textContent      = workedDays;
   // 週平均出勤日数: その月に含まれる週数で割る
   const [sy, sm] = ym.split('-').map(Number);
@@ -2441,7 +2446,7 @@ function renderAnnual() {
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * totalDays : null;
 
   document.getElementById('ann-actual').textContent    = minutesToHM(totalActual);
-  document.getElementById('ann-planned').textContent   = minutesToHM(totalPlanned);
+  document.getElementById('ann-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('ann-days').textContent      = totalDays;
   document.getElementById('ann-avg').textContent       = activeMonths > 0 ? (totalDays / activeMonths).toFixed(1) : '0.0';
   document.getElementById('ann-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
