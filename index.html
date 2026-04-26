@@ -1578,7 +1578,7 @@ function saveEditPunch(date) {
 function renderPunchRecords() {
   const container = document.getElementById('punch-records-container');
   const ym = document.getElementById('punch-month')?.value || '';
-  const allPunches = [...DB.punches].sort((a, b) => b.date.localeCompare(a.date));
+  const allPunches = [...DB.punches].sort((a, b) => a.date.localeCompare(b.date));
   const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
