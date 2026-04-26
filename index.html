@@ -685,6 +685,17 @@
           style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
       </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:13px;font-weight:600;color:#4a5568;white-space:nowrap">週所定労働日数</label>
+        <select id="weekly-days" onchange="saveWeeklyDays()"
+          style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+          <option value="5">5日（フルタイム）</option>
+          <option value="4">4日</option>
+          <option value="3">3日</option>
+          <option value="2">2日</option>
+          <option value="1">1日</option>
+        </select>
+      </div>
       <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
     </div>
   </div>
@@ -965,6 +976,8 @@ const DB = {
   // 有給管理
   get hireDate()    { return localStorage.getItem('wt_hire_date') || ''; },
   set hireDate(v)   { localStorage.setItem('wt_hire_date', v); },
+  get weeklyDays()  { return parseInt(localStorage.getItem('wt_weekly_days') || '5'); },
+  set weeklyDays(v) { localStorage.setItem('wt_weekly_days', String(v)); },
   get leaveUsed()   { return JSON.parse(localStorage.getItem('wt_leave_used') || '[]'); },
   set leaveUsed(v)  { localStorage.setItem('wt_leave_used', JSON.stringify(v)); },
   // 月別時給 { "2026-01": 1100, "2026-03": 1200, ... }
@@ -1791,45 +1804,38 @@ function renderPayslip(ym, workedDays, sortedDates, days) {
 
 // ---- 有給管理 ----
 
-// 労働基準法に基づく付与ステージ (継続勤務月数 → 付与日数)
-const LEAVE_STAGES = [
-  { months:  6, days: 10 },
-  { months: 18, days: 11 },
-  { months: 30, days: 12 },
-  { months: 42, days: 14 },
-  { months: 54, days: 16 },
-  { months: 66, days: 18 },
-  { months: 78, days: 20 },
-];
+// 労働基準法に基づく比例付与テーブル (継続勤務月数×週所定労働日数)
+const LEAVE_MONTHS = [6, 18, 30, 42, 54, 66, 78];
+const LEAVE_DAYS_TABLE = {
+  5: [10, 11, 12, 14, 16, 18, 20],
+  4: [ 7,  8,  9, 10, 12, 13, 15],
+  3: [ 5,  6,  6,  8,  9, 10, 11],
+  2: [ 3,  4,  4,  5,  6,  6,  7],
+  1: [ 1,  2,  2,  2,  3,  3,  3],
+};
+function getLeaveDays(monthsIdx) {
+  const wd = Math.min(5, Math.max(1, DB.weeklyDays));
+  return LEAVE_DAYS_TABLE[wd][monthsIdx];
+}
 
 function diffMonths(from, to) {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
 }
 
 function calcLeaveGrants(hireDate) {
-  // hireDate: "YYYY-MM-DD"
   const hire = new Date(hireDate);
   const now  = new Date();
-  const grants = [];
-  for (const stage of LEAVE_STAGES) {
+  return LEAVE_MONTHS.map((months, i) => {
     const grantDate = new Date(hire);
-    grantDate.setMonth(grantDate.getMonth() + stage.months);
-    const isPast = grantDate <= now;
-    grants.push({ months: stage.months, days: stage.days, grantDate, isPast });
-  }
-  return grants;
+    grantDate.setMonth(grantDate.getMonth() + months);
+    return { months, days: getLeaveDays(i), grantDate, isPast: grantDate <= now };
+  });
 }
 
 function calcTotalGranted(hireDate) {
-  // 付与済み日数の合計（2年以内有効 → 最大2回分）
-  const hire = new Date(hireDate);
-  const now  = new Date();
   const grants = calcLeaveGrants(hireDate).filter(g => g.isPast);
   if (!grants.length) return 0;
-
-  // 直近2回分（2年繰越）を合計
-  const recent = grants.slice(-2);
-  return recent.reduce((sum, g) => sum + g.days, 0);
+  return grants.slice(-2).reduce((sum, g) => sum + g.days, 0);
 }
 
 function saveHireDate() {
@@ -1838,6 +1844,11 @@ function saveHireDate() {
   DB.hireDate = val;
   SYNC.push();
   showToast('入社日を保存しました');
+  renderLeave();
+}
+
+function saveWeeklyDays() {
+  DB.weeklyDays = parseInt(document.getElementById('weekly-days').value);
   renderLeave();
 }
 
@@ -1867,6 +1878,7 @@ function renderLeave() {
   // 入社日欄
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
+  document.getElementById('weekly-days').value = DB.weeklyDays;
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
