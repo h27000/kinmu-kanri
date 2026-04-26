@@ -558,11 +558,6 @@
     color: #744210;
   }
 
-  /* テーブルのはみ出し対策 */
-  #annual-table-container,
-  #summary-table-container,
-  #punch-records-container { overflow-x: auto; }
-
   @media (max-width: 600px) {
     .punch-buttons { flex-direction: column; align-items: center; }
     .btn-in, .btn-out { width: 100%; max-width: 260px; }
@@ -1576,7 +1571,7 @@ function renderPunchRecords() {
     const mins = calcPunchMinutes(p);
     const [y, m, d] = p.date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(p.date).getDay()];
-    const dateStr = `${y}/${m}/${d}(${dow})`;
+    const dateStr = `${m}/${d}(${dow})`;
     const ym = `${y}-${m}`;
     const wage = calcWage(mins, ym);
 
@@ -1955,7 +1950,7 @@ function renderLeaveList() {
     const [y,m,d] = r.date.split('-');
     const dow = DOW[new Date(r.date).getDay()];
     html += `<tr>
-      <td>${y}/${m}/${d}(${dow})</td>
+      <td>${m}/${d}(${dow})</td>
       <td style="color:#718096;font-size:13px">${r.memo || '-'}</td>
       <td><button class="btn-sm btn-danger" onclick="deleteLeave(${r.id})">削除</button></td>
     </tr>`;
@@ -2346,7 +2341,7 @@ function renderSummary() {
     const wage = calcWage(actualMins, date.substring(0, 7));
     const transport = (hasTransport && p && actualMins > 0) ? DB.transportFee : null;
     html += `<tr>
-      <td>${dy}/${dm}/${dd}(${dow})</td>
+      <td>${dm}/${dd}(${dow})</td>
       <td>${p?.in ?? '-'}</td>
       <td>${p?.out ?? '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
@@ -2492,7 +2487,7 @@ function renderAnnual() {
     const wage = calcMonthWage(mym);
     const transport = hasTransport ? DB.transportFee * workedDays : null;
     html += `<tr>
-      <td>${year}/${pad(m)}</td>
+      <td>${pad(m)}月</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
