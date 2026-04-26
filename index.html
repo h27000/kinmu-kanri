@@ -1599,6 +1599,7 @@ function renderPunchRecords() {
         <td style="white-space:nowrap">
           <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')">保存</button>
           <button class="btn-sm btn-cancel" style="margin-left:4px" onclick="cancelEditPunch()">取消</button>
+          <button class="btn-sm btn-danger" style="margin-left:4px" onclick="deletePunch('${p.date}')">削除</button>
         </td>
       </tr>`;
     } else {
@@ -1620,9 +1621,8 @@ function renderPunchRecords() {
         <td>${breakStr}</td>
         <td>${timeBadge}</td>
         ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
-        <td style="white-space:nowrap">
+        <td>
           <button class="btn-sm btn-edit" onclick="startEditPunch('${p.date}')">編集</button>
-          <button class="btn-sm btn-danger" style="margin-left:4px" onclick="deletePunch('${p.date}')">削除</button>
         </td>
       </tr>`;
     }
