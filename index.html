@@ -1576,7 +1576,7 @@ function renderPunchRecords() {
     const mins = calcPunchMinutes(p);
     const [y, m, d] = p.date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(p.date).getDay()];
-    const dateStr = `${m}/${d}(${dow})`;
+    const dateStr = `${parseInt(m)}/${parseInt(d)}(${dow})`;
     const ym = `${y}-${m}`;
     const wage = calcWage(mins, ym);
 
@@ -1586,7 +1586,7 @@ function renderPunchRecords() {
         <td colspan="${colSpan}" style="padding:8px 6px">
           <input type="hidden" id="edit-date-${p.date}" value="${p.date}">
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="font-size:13px;font-weight:700;color:#1a202c">${m}/${d}(${dow})</div>
+            <div style="font-size:13px;font-weight:700;color:#1a202c">${parseInt(m)}/${parseInt(d)}(${dow})</div>
             <div style="display:flex;gap:6px;align-items:center">
               <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">出</span>
               <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
@@ -1933,7 +1933,7 @@ function renderLeave() {
       <div style="font-size:12px;font-weight:600;color:#718096;margin-bottom:8px">付与スケジュール</div>
       ${grants.map(g => {
         const [y,m,d] = [g.grantDate.getFullYear(), g.grantDate.getMonth()+1, g.grantDate.getDate()];
-        const label = `${y}/${pad(m)}/${pad(d)}　+${g.days}日`;
+        const label = `${y}/${m}/${d}　+${g.days}日`;
         return `<div class="leave-grant-item">
           <div class="leave-grant-dot ${g.isPast ? 'done' : 'future'}"></div>
           <span style="flex:1;color:${g.isPast ? '#1a202c' : '#a0aec0'}">${label}</span>
@@ -1959,7 +1959,7 @@ function renderLeaveList() {
     const [y,m,d] = r.date.split('-');
     const dow = DOW[new Date(r.date).getDay()];
     html += `<tr>
-      <td>${m}/${d}(${dow})</td>
+      <td>${parseInt(m)}/${parseInt(d)}(${dow})</td>
       <td style="color:#718096;font-size:13px">${r.memo || '-'}</td>
       <td><button class="btn-sm btn-danger" onclick="deleteLeave(${r.id})">削除</button></td>
     </tr>`;
@@ -2346,7 +2346,7 @@ function renderSummary() {
       `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcWage(actualMins, date.substring(0, 7));
     html += `<tr>
-      <td>${dm}/${dd}(${dow})</td>
+      <td>${parseInt(dm)}/${parseInt(dd)}(${dow})</td>
       <td>${p?.in ?? '-'}</td>
       <td>${p?.out ?? '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
@@ -2489,7 +2489,7 @@ function renderAnnual() {
       `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcMonthWage(mym);
     html += `<tr>
-      <td>${pad(m)}月</td>
+      <td>${m}月</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
