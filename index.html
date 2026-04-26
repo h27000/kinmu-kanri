@@ -2351,7 +2351,7 @@ function renderSummary() {
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -2359,16 +2359,17 @@ function renderSummary() {
     const overtimeMins = plannedMins > 0 ? Math.max(0, actualMins - plannedMins) : 0;
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-    const wage = calcWage(actualMins, date.substring(0, 7));
     const rate = DB.getRate(date.substring(0, 7));
-    const extraWage = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate) : null;
+    // 給与 = シフト×時給、+α = 残業×時給
+    const shiftWage  = (plannedMins > 0 && rate > 0) ? Math.round(plannedMins / 60 * rate) : null;
+    const extraWage  = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
       <td>${p?.in ?? '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
-      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
+      ${hasWage ? `<td>${shiftWage !== null ? '<span class="wage-chip">'+fmtWage(shiftWage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
