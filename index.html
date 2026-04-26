@@ -2463,7 +2463,8 @@ function renderAnnual() {
   document.getElementById('ann-actual').textContent    = minutesToHM(totalActual);
   document.getElementById('ann-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('ann-days').textContent      = totalDays;
-  document.getElementById('ann-avg').textContent       = activeMonths > 0 ? (totalDays / activeMonths).toFixed(1) : '0.0';
+  const annAvgVal = activeMonths > 0 ? totalDays / activeMonths : 0;
+  document.getElementById('ann-avg').textContent = annAvgVal % 1 === 0 ? annAvgVal : annAvgVal.toFixed(1);
   document.getElementById('ann-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
   document.getElementById('ann-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
