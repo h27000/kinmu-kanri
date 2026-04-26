@@ -1597,10 +1597,12 @@ function renderPunchRecords() {
       const colSpan = hasWage ? 6 : 5;
       html += `<tr class="edit-row">
         <td colspan="${colSpan}" style="padding:8px 6px">
-          <input type="hidden" id="edit-date-${p.date}" value="${p.date}">
           <div style="display:flex;gap:8px;align-items:stretch">
             <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
-              <div style="font-size:13px;font-weight:700;color:#1a202c">${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">日</span>
+                <input class="time-input" type="date" id="edit-date-${p.date}" value="${p.date}" style="flex:1;min-width:0;width:auto">
+              </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">出</span>
                 <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
