@@ -634,35 +634,31 @@
 <!-- シフトタブ -->
 <div id="tab-shift" class="tab">
   <div class="form-card">
-    <h3>シフトを追加</h3>
-    <div style="display:flex;gap:8px;align-items:flex-end">
-      <div class="form-group" style="flex:2;min-width:0">
-        <label>日付</label>
-        <input type="date" id="shift-date" style="width:100%;font-size:13px;padding:8px 6px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
+      <div>
+        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">日付</label>
+        <input type="date" id="shift-date" style="width:100%;font-size:13px;padding:8px 6px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box">
       </div>
-      <div class="form-group" style="flex:1;min-width:0">
-        <label>開始</label>
-        <select id="shift-start" class="time-select" onchange="autoFillBreak()">
+      <div>
+        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">開始</label>
+        <select id="shift-start" class="time-select" onchange="autoFillBreak()" style="width:100%">
           <option value="">--</option>
         </select>
       </div>
-      <div class="form-group" style="flex:1;min-width:0">
-        <label>終了</label>
-        <select id="shift-end" class="time-select" onchange="autoFillBreak()">
+      <div>
+        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">終了</label>
+        <select id="shift-end" class="time-select" onchange="autoFillBreak()" style="width:100%">
           <option value="">--</option>
         </select>
       </div>
-      <input type="hidden" id="shift-break" value="60">
-      <input type="hidden" id="shift-memo" value="">
-      <div style="flex-shrink:0;padding-bottom:2px">
-        <button class="btn-primary" onclick="addShift()" style="white-space:nowrap;padding:9px 12px">追加</button>
-      </div>
+      <button class="btn-primary" onclick="addShift()" style="white-space:nowrap;padding:9px 14px">追加</button>
     </div>
+    <input type="hidden" id="shift-break" value="60">
+    <input type="hidden" id="shift-memo" value="">
   </div>
 
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
-      <h3>シフト一覧</h3>
       <select id="shift-month" onchange="renderShiftList()"></select>
     </div>
     <div id="shift-list-container">
