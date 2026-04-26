@@ -1710,36 +1710,21 @@ function renderShiftList() {
   const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
   const DOWS = ['日','月','火','水','木','金','土'];
-  const DOW_COLORS = { '日':'#e53e3e','土':'#3182ce' };
-  let html = '';
+  const DOW_COLORS = { '日':'color:#e53e3e', '土':'color:#3182ce' };
+  let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th></th></tr></thead><tbody>`;
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
     const dow = DOWS[new Date(s.date).getDay()];
-    const dowColor = DOW_COLORS[dow] || 'white';
-    html += `
-    <div class="shift-card">
-      <div class="shift-date-block">
-        <div class="s-month">${parseInt(m)}月</div>
-        <div class="s-day">${parseInt(d)}</div>
-        <div class="s-dow" style="color:${dowColor}">${dow}</div>
-      </div>
-      <div class="shift-info">
-        <div class="shift-time-row">
-          <span>${s.start}</span>
-          <span class="shift-time-arrow">→</span>
-          <span>${s.end}</span>
-        </div>
-        <div class="shift-meta-row">
-          <span class="badge badge-blue">${minutesToHM(s.work)}</span>
-          <span class="shift-meta-item">休憩 ${s.break}分</span>
-        </div>
-        ${s.memo ? `<div class="shift-memo-text">📝 ${s.memo}</div>` : ''}
-      </div>
-      <div class="shift-actions">
-        <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
-      </div>
-    </div>`;
+    const dowStyle = DOW_COLORS[dow] || '';
+    html += `<tr>
+      <td style="${dowStyle}">${parseInt(m)}/${parseInt(d)}(${dow})</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td>${s.break}分</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button></td>
+    </tr>`;
   }
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
