@@ -2273,13 +2273,14 @@ function renderSummaryCalendar(ym, days) {
 function initTabMonthSelector(id) {
   const sel = document.getElementById(id);
   if (!sel) return;
-  const now = new Date();
-  for (let i = -3; i < 24; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+  const year = new Date().getFullYear();
+  const cur  = `${year}-${pad(new Date().getMonth()+1)}`;
+  for (let m = 1; m <= 12; m++) {
+    const val = `${year}-${pad(m)}`;
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    opt.textContent = `${year}年${m}月`;
+    if (val === cur) opt.selected = true;
     sel.appendChild(opt);
   }
 }
@@ -2287,13 +2288,14 @@ function initTabMonthSelector(id) {
 // ---- 月次集計 ----
 function initMonthSelector() {
   const sel = document.getElementById('summary-month');
-  const now = new Date();
-  for (let i = -3; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+  const year = new Date().getFullYear();
+  const cur  = `${year}-${pad(new Date().getMonth()+1)}`;
+  for (let m = 1; m <= 12; m++) {
+    const val = `${year}-${pad(m)}`;
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    opt.textContent = `${year}年${m}月`;
+    if (val === cur) opt.selected = true;
     sel.appendChild(opt);
   }
 }
