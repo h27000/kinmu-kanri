@@ -2359,7 +2359,7 @@ function renderSummary() {
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  let html = `<table><thead><tr><th>日</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -2367,17 +2367,13 @@ function renderSummary() {
     const overtimeMins = plannedMins > 0 ? Math.max(0, actualMins - plannedMins) : 0;
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-    const rate = DB.getRate(date.substring(0, 7));
-    const normalMins = Math.min(actualMins, 480);
-    const overMins   = Math.max(0, actualMins - 480);
-    const shiftWage  = (actualMins > 0 && rate > 0) ? Math.round(normalMins / 60 * rate) : null;
-    const extraWage  = (overMins > 0 && rate > 0) ? Math.round(overMins / 60 * rate * 1.25) : null;
+    const wage = actualMins > 0 ? calcWage(actualMins, date.substring(0, 7)) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
       <td>${plannedMins ? minutesToHMFull(plannedMins) : '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
-      ${hasWage ? `<td>${shiftWage !== null ? '<span class="wage-chip">'+fmtWage(shiftWage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
+      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
