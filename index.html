@@ -1585,26 +1585,23 @@ function renderPunchRecords() {
       html += `<tr class="edit-row">
         <td colspan="${colSpan}" style="padding:8px 6px">
           <input type="hidden" id="edit-date-${p.date}" value="${p.date}">
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
-              <div style="font-size:13px;font-weight:700;color:#1a202c">${m}/${d}(${dow})</div>
-              <div style="display:flex;gap:4px;align-items:center">
-                <span style="font-size:11px;color:#718096;flex-shrink:0">出</span>
-                <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
-                <span style="font-size:11px;color:#718096;flex-shrink:0">退</span>
-                <input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}" style="flex:1;min-width:0">
-              </div>
-              <div style="display:flex;gap:4px;align-items:center">
-                <span style="font-size:11px;color:#718096;flex-shrink:0">休</span>
-                <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="flex:1;min-width:0">
-                <span style="font-size:11px;color:#718096;flex-shrink:0">〜</span>
-                <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="flex:1;min-width:0">
-              </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:13px;font-weight:700;color:#1a202c">${m}/${d}(${dow})</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">出</span>
+              <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
+              <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">退</span>
+              <input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}" style="flex:1;min-width:0">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-              <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')">保存</button>
-              <button class="btn-sm btn-cancel" onclick="cancelEditPunch()">取消</button>
-              <button class="btn-sm btn-danger" onclick="deletePunch('${p.date}')">削除</button>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">休</span>
+              <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="flex:1;min-width:0">
+              <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">〜</span>
+              <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="flex:1;min-width:0">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')" style="flex:1;padding:8px 0;font-size:13px">保存</button>
+              <button class="btn-sm btn-danger" onclick="deletePunch('${p.date}')" style="flex:1;padding:8px 0;font-size:13px">削除</button>
             </div>
           </div>
         </td>
