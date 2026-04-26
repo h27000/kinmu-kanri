@@ -558,6 +558,11 @@
     color: #744210;
   }
 
+  /* テーブルのはみ出し対策 */
+  #annual-table-container,
+  #summary-table-container,
+  #punch-records-container { overflow-x: auto; }
+
   @media (max-width: 600px) {
     .punch-buttons { flex-direction: column; align-items: center; }
     .btn-in, .btn-out { width: 100%; max-width: 260px; }
@@ -565,6 +570,7 @@
     .stats-grid { grid-template-columns: 1fr 1fr; }
     table { font-size: 12px; }
     th, td { padding: 7px 6px; }
+    th { white-space: nowrap; }
   }
 </style>
 </head>
