@@ -2368,9 +2368,10 @@ function renderSummary() {
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
     const rate = DB.getRate(date.substring(0, 7));
-    const shiftWage  = (plannedMins > 0 && rate > 0) ? Math.round(plannedMins / 60 * rate) : null;
-    const otRate     = actualMins > 480 ? 1.25 : 1;
-    const extraWage  = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate * otRate) : null;
+    const normalMins = Math.min(actualMins, 480);
+    const overMins   = Math.max(0, actualMins - 480);
+    const shiftWage  = (actualMins > 0 && rate > 0) ? Math.round(normalMins / 60 * rate) : null;
+    const extraWage  = (overMins > 0 && rate > 0) ? Math.round(overMins / 60 * rate * 1.25) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
       <td>${plannedMins ? minutesToHMFull(plannedMins) : '-'}</td>
