@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #fdf0f0; color: #1a202c; min-height: 100vh; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #fdf0f0; color: #1a202c; min-height: 100vh; overflow-x: hidden; max-width: 100vw; }
 
   header {
     background: #AA0000;
@@ -558,13 +558,29 @@
     color: #744210;
   }
 
+  /* テーブルははみ出たらカード内でスクロール */
+  #annual-table-container,
+  #summary-table-container,
+  #punch-records-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
   @media (max-width: 600px) {
-    .punch-buttons { flex-direction: column; align-items: center; }
-    .btn-in, .btn-out { width: 100%; max-width: 260px; }
+    header { padding: 10px 16px; }
+    header h1 { font-size: 16px; }
+    nav button { padding: 10px 12px; font-size: 13px; }
+    .tab { padding: 10px; }
+    .card { padding: 14px; margin-bottom: 10px; }
+    .punch-main { padding: 6px 0 4px; }
+    .today { font-size: 17px; margin-bottom: 12px; }
+    #clock { font-size: 26px !important; margin: 2px 0 8px !important; }
+    .punch-buttons { flex-direction: row; gap: 10px; margin-bottom: 12px; }
+    .btn-in, .btn-out { padding: 12px 20px; font-size: 16px; min-width: 0; flex: 1; }
+    .punch-status { font-size: 13px; padding: 8px 12px; }
     .form-row { flex-direction: column; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat-box { padding: 10px; }
+    .stat-box .value { font-size: 18px; }
     table { font-size: 12px; }
-    th, td { padding: 7px 6px; }
+    th, td { padding: 6px 5px; }
     th { white-space: nowrap; }
   }
 </style>
