@@ -633,24 +633,26 @@
 <!-- シフトタブ -->
 <div id="tab-shift" class="tab">
   <div class="form-card">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
+    <div style="display:flex;flex-direction:column;gap:10px">
       <div>
         <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">日付</label>
         <input type="date" id="shift-date" style="width:100%;font-size:13px;padding:8px 6px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box">
       </div>
-      <div>
-        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">開始</label>
-        <select id="shift-start" class="time-select" onchange="autoFillBreak()" style="width:100%">
-          <option value="">--</option>
-        </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+        <div>
+          <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">開始</label>
+          <select id="shift-start" class="time-select" onchange="autoFillBreak()" style="width:100%">
+            <option value="">--</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">終了</label>
+          <select id="shift-end" class="time-select" onchange="autoFillBreak()" style="width:100%">
+            <option value="">--</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="addShift()" style="white-space:nowrap;padding:9px 14px">追加</button>
       </div>
-      <div>
-        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">終了</label>
-        <select id="shift-end" class="time-select" onchange="autoFillBreak()" style="width:100%">
-          <option value="">--</option>
-        </select>
-      </div>
-      <button class="btn-primary" onclick="addShift()" style="white-space:nowrap;padding:9px 14px">追加</button>
     </div>
     <input type="hidden" id="shift-break" value="60">
     <input type="hidden" id="shift-memo" value="">
