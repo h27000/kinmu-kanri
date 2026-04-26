@@ -2344,7 +2344,7 @@ function renderSummary() {
 
   const hasWage = DB.getRate(ym) > 0;
   const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -2355,7 +2355,6 @@ function renderSummary() {
     const diffStr = diff === 0 ? '-' :
       `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcWage(actualMins, date.substring(0, 7));
-    const transport = (hasTransport && p && actualMins > 0) ? DB.transportFee : null;
     html += `<tr>
       <td>${dm}/${dd}(${dow})</td>
       <td>${p?.in ?? '-'}</td>
@@ -2364,7 +2363,6 @@ function renderSummary() {
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
-      ${hasTransport ? `<td>${transport !== null ? fmtWage(transport) : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
