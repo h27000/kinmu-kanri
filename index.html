@@ -2360,9 +2360,10 @@ function renderSummary() {
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
     const rate = DB.getRate(date.substring(0, 7));
-    // 給与 = シフト×時給、+α = 残業×時給
+    // 給与 = シフト×時給、+α = 残業×時給（実働8h超の場合は1.25倍）
     const shiftWage  = (plannedMins > 0 && rate > 0) ? Math.round(plannedMins / 60 * rate) : null;
-    const extraWage  = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate) : null;
+    const otRate     = actualMins > 480 ? 1.25 : 1;
+    const extraWage  = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate * otRate) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
       <td>${p?.in ?? '-'}</td>
