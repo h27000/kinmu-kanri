@@ -2083,10 +2083,6 @@ function renderWeekly() {
           <div class="wc-label">給与</div>
           <div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div>
         </div>` : ''}
-        ${hasTrans ? `<div class="week-cell">
-          <div class="wc-label">交通費</div>
-          <div class="wc-value" style="font-size:14px">${transport !== null ? '¥'+transport.toLocaleString() : '-'}</div>
-        </div>` : ''}
       </div>
       <div class="week-days-row">${dayChips}</div>
     </div>`;
@@ -2179,7 +2175,6 @@ function renderSummaryWeekly(ym) {
         <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value">${actualMins ? (actualMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
         <div class="week-cell"><div class="wc-label">予定</div><div class="wc-value">${plannedMins ? (plannedMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
         ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div>` : ''}
-        ${hasTrans ? `<div class="week-cell"><div class="wc-label">交通費</div><div class="wc-value" style="font-size:14px">${transport !== null ? '¥'+transport.toLocaleString() : '-'}</div></div>` : ''}
       </div>
       <div class="week-days-row">${dayChips}</div>
     </div>`;
