@@ -2320,7 +2320,7 @@ function renderSummary() {
 
   const hasWage = DB.getRate(ym) > 0;
   const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>シフト</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -2467,7 +2467,7 @@ function renderAnnual() {
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
-  let html = `<table><thead><tr><th>月</th><th>出勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>月</th><th>出勤</th><th>実働</th><th>シフト</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
     const diff = actualMins - plannedMins;
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
