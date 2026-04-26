@@ -2351,26 +2351,24 @@ function renderSummary() {
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>シフト</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
     const plannedMins = (days[date].shifts || []).reduce((a, s) => a + s.work, 0);
-    const diff = actualMins - plannedMins;
+    const overtimeMins = plannedMins > 0 ? Math.max(0, actualMins - plannedMins) : 0;
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-    const diffStr = diff === 0 ? '-' :
-      `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
     const wage = calcWage(actualMins, date.substring(0, 7));
+    const rate = DB.getRate(date.substring(0, 7));
+    const extraWage = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
       <td>${p?.in ?? '-'}</td>
-      <td>${p?.out ?? '-'}</td>
-      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
-      <td>${diffStr}</td>
-      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
+      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
+      <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
+      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
@@ -2433,29 +2431,32 @@ function initYearSelector() {
 function getMonthData(ym) {
   const punches = DB.punches.filter(p => p.date.startsWith(ym));
   const shifts  = DB.shifts.filter(s => s.date.startsWith(ym));
-  let actualMins = 0, plannedMins = 0, workedDays = 0;
+  let actualMins = 0, plannedMins = 0, workedDays = 0, overtimeMins = 0;
   const dateSet = new Set([...punches.map(p => p.date), ...shifts.map(s => s.date)]);
   for (const date of dateSet) {
     const p  = punches.find(x => x.date === date);
     const ss = shifts.filter(x => x.date === date);
     const a  = p ? calcPunchMinutes(p) : 0;
+    const plan = ss.reduce((acc, s) => acc + s.work, 0);
     if (a > 0) { actualMins += a; workedDays++; }
-    plannedMins += ss.reduce((acc, s) => acc + s.work, 0);
+    plannedMins += plan;
+    if (a > plan && plan > 0) overtimeMins += (a - plan);
   }
-  return { actualMins, plannedMins, workedDays };
+  return { actualMins, plannedMins, workedDays, overtimeMins };
 }
 
 function renderAnnual() {
   const year = document.getElementById('annual-year').value;
-  let totalActual = 0, totalPlanned = 0, totalDays = 0;
+  let totalActual = 0, totalPlanned = 0, totalDays = 0, totalOvertime = 0;
   const months = [];
   for (let m = 1; m <= 12; m++) {
     const ym = `${year}-${pad(m)}`;
     const data = getMonthData(ym);
     months.push({ m, ym, ...data });
-    totalActual += data.actualMins;
-    totalPlanned += data.plannedMins;
-    totalDays += data.workedDays;
+    totalActual   += data.actualMins;
+    totalPlanned  += data.plannedMins;
+    totalDays     += data.workedDays;
+    totalOvertime += data.overtimeMins;
   }
   // 年間合計給与: 日ごとに正確に計算して合算
   const totalWage = (() => {
@@ -2499,32 +2500,29 @@ function renderAnnual() {
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
-  let html = `<table><thead><tr><th>月</th><th>出勤</th><th>実働</th><th>シフト</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
-  for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
-    const diff = actualMins - plannedMins;
-    const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
-      diff === 0 ? '-' :
-      `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
+  let html = `<table><thead><tr><th>月</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
+  for (const { m, ym: mym, actualMins, plannedMins, workedDays, overtimeMins } of months) {
     const wage = calcMonthWage(mym);
+    const rate = DB.getRate(mym);
+    const extraWage = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate) : null;
     html += `<tr>
       <td>${m}月</td>
       <td>${workedDays > 0 ? workedDays : '-'}</td>
-      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
-      <td>${diffStr}</td>
-      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
+      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
+      <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
+      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
     </tr>`;
   }
-  const totalDiff = totalActual - totalPlanned;
-  const totalDiffStr = totalDiff === 0 ? '-' :
-    `<span style="color:${totalDiff>0?'#276749':'#AA0000'};font-weight:600">${totalDiff>0?'+':''}${minutesToHM(totalDiff)}</span>`;
+  const totalRate = hasWage ? (months.find(({ ym: mym }) => DB.getRate(mym) > 0) ? DB.getRate(months.find(({ ym: mym }) => DB.getRate(mym) > 0).ym) : 0) : 0;
+  const totalExtraWage = (totalOvertime > 0 && totalRate > 0) ? Math.round(totalOvertime / 60 * totalRate) : null;
   html += `<tr style="font-weight:700;background:#f7fafc">
     <td>合計</td>
     <td>${totalDays > 0 ? totalDays : '-'}</td>
-    <td>${totalActual ? '<span class="badge badge-blue">'+minutesToHM(totalActual)+'</span>' : '-'}</td>
     <td>${totalPlanned ? minutesToHM(totalPlanned) : '-'}</td>
-    <td>${totalDiffStr}</td>
-    ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td>` : ''}
+    <td>${totalActual ? '<span class="badge badge-blue">'+minutesToHM(totalActual)+'</span>' : '-'}</td>
+    <td>${totalOvertime ? '<span class="badge badge-yellow">'+minutesToHM(totalOvertime)+'</span>' : '-'}</td>
+    ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td><td>${totalExtraWage !== null ? '<span class="wage-chip">'+fmtWage(totalExtraWage)+'</span>' : '-'}</td>` : ''}
   </tr>`;
   html += '</tbody></table>';
   container.innerHTML = html;
