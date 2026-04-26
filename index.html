@@ -1086,6 +1086,11 @@ function minutesToHM(m) {
   const min = Math.abs(m) % 60;
   return min === 0 ? `${m < 0 ? '-' : ''}${h}` : `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
 }
+function minutesToHMFull(m) {
+  const h = Math.floor(Math.abs(m) / 60);
+  const min = Math.abs(m) % 60;
+  return `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
+}
 function minutesToHMShort(m) { return minutesToHM(m); }
 function minutesToH(m) { return (m / 60).toFixed(1); }
 function dowSpan(dow) {
@@ -2351,7 +2356,7 @@ function renderSummary() {
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  let html = `<table><thead><tr><th>日</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th><th>+α</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
@@ -2360,14 +2365,12 @@ function renderSummary() {
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
     const rate = DB.getRate(date.substring(0, 7));
-    // 給与 = シフト×時給、+α = 残業×時給（実働8h超の場合は1.25倍）
     const shiftWage  = (plannedMins > 0 && rate > 0) ? Math.round(plannedMins / 60 * rate) : null;
     const otRate     = actualMins > 480 ? 1.25 : 1;
     const extraWage  = (overtimeMins > 0 && rate > 0) ? Math.round(overtimeMins / 60 * rate * otRate) : null;
     html += `<tr>
       <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
-      <td>${p?.in ?? '-'}</td>
-      <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
+      <td>${plannedMins ? minutesToHMFull(plannedMins) : '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
       ${hasWage ? `<td>${shiftWage !== null ? '<span class="wage-chip">'+fmtWage(shiftWage)+'</span>' : '-'}</td><td>${extraWage !== null ? '<span class="wage-chip">'+fmtWage(extraWage)+'</span>' : '-'}</td>` : ''}
