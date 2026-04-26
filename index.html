@@ -2478,7 +2478,7 @@ function renderAnnual() {
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
   const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤(日)</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
   for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
     const diff = actualMins - plannedMins;
     const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
@@ -2491,7 +2491,7 @@ function renderAnnual() {
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
       <td>${diffStr}</td>
-      <td>${workedDays > 0 ? workedDays+'日' : '-'}</td>
+      <td>${workedDays > 0 ? workedDays : '-'}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
       ${hasTransport ? `<td>${transport ? fmtWage(transport) : '-'}</td>` : ''}
     </tr>`;
@@ -2504,7 +2504,7 @@ function renderAnnual() {
     <td>${minutesToHM(totalActual)}</td>
     <td>${minutesToHM(totalPlanned)}</td>
     <td>${totalDiffStr}</td>
-    <td>${totalDays}日</td>
+    <td>${totalDays}</td>
     ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td>` : ''}
     ${hasTransport ? `<td>${totalTransport !== null ? '<span class="wage-chip">'+fmtWage(totalTransport)+'</span>' : '-'}</td>` : ''}
   </tr>`;
