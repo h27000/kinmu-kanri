@@ -362,7 +362,7 @@
   .week-day-chip.planned  { background: #f0fff4; color: #276749; }
   .week-day-chip.off      { background: #f0f4f8; color: #a0aec0; }
   .week-day-chip.sun      { color: #e53e3e; }
-  .week-day-chip.sat      { color: #1a202c; }
+  .week-day-chip.sat      { color: #3182ce; }
 
   /* 給与明細 */
   .payslip {
@@ -1710,12 +1710,10 @@ function renderShiftList() {
   const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
   const DOWS = ['日','月','火','水','木','金','土'];
-  const DOW_COLORS = { '日':'color:#e53e3e', '土':'color:#3182ce' };
   let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th></th></tr></thead><tbody>`;
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
     const dow = DOWS[new Date(s.date).getDay()];
-    const dowStyle = DOW_COLORS[dow] || '';
     html += `<tr>
       <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
       <td>${s.start}</td>
