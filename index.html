@@ -686,19 +686,7 @@
           style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <label style="font-size:13px;font-weight:600;color:#4a5568;white-space:nowrap">週所定労働日数</label>
-        <select id="weekly-days" onchange="saveWeeklyDays()"
-          style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
-          <option value="5">5日（フルタイム）</option>
-          <option value="4">4日</option>
-          <option value="3">3日</option>
-          <option value="2">2日</option>
-          <option value="1">1日</option>
-        </select>
-        <button class="btn-sm" onclick="autoCalcWeeklyDays()"
-          style="background:#edf2f7;color:#4a5568;border:none;padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer">自動計算</button>
-      </div>
+      <div id="weekly-days-display" style="font-size:13px;font-weight:600;color:#4a5568"></div>
       <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
     </div>
   </div>
@@ -1713,6 +1701,7 @@ function addShift() {
   DB.shifts = shifts;
   SYNC.push();
   saveAutoBackup();
+  autoCalcWeeklyDays();
   showToast('シフトを追加しました');
   document.getElementById('shift-start').value = 9;
   document.getElementById('shift-end').value   = 15;
@@ -1724,6 +1713,7 @@ function deleteShift(id) {
   if (!confirm('このシフトを削除しますか？')) return;
   DB.shifts = DB.shifts.filter(s => s.id !== id);
   SYNC.push();
+  autoCalcWeeklyDays();
   renderShiftList();
   showToast('削除しました');
 }
@@ -1855,38 +1845,31 @@ function saveHireDate() {
   renderLeave();
 }
 
-function saveWeeklyDays() {
-  DB.weeklyDays = parseInt(document.getElementById('weekly-days').value);
-  renderLeave();
-}
-
 function autoCalcWeeklyDays() {
-  // シフト優先、なければ打刻記録から週平均勤務日数を計算
   const shifts  = DB.shifts;
   const punches = DB.punches.filter(p => p.in && p.out);
   const dates   = [...new Set(
     (shifts.length ? shifts.map(s => s.date) : punches.map(p => p.date))
   )].sort();
 
-  if (dates.length === 0) { showToast('記録がないため計算できません'); return; }
-
-  const getMonday = d => {
-    const day = d.getDay();
-    const mon = new Date(d);
-    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-    mon.setHours(0,0,0,0);
-    return mon;
-  };
-  const firstMon = getMonday(new Date(dates[0]));
-  const lastMon  = getMonday(new Date(dates[dates.length - 1]));
-  const weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
-  const avg = dates.length / weekCount;
-  const days = Math.min(5, Math.max(1, Math.round(avg)));
+  let days = 5;
+  if (dates.length > 0) {
+    const getMonday = d => {
+      const day = d.getDay();
+      const mon = new Date(d);
+      mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+      mon.setHours(0,0,0,0);
+      return mon;
+    };
+    const firstMon  = getMonday(new Date(dates[0]));
+    const lastMon   = getMonday(new Date(dates[dates.length - 1]));
+    const weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
+    days = Math.min(5, Math.max(1, Math.round(dates.length / weekCount)));
+  }
 
   DB.weeklyDays = days;
-  document.getElementById('weekly-days').value = days;
-  showToast(`週${days}日と計算しました`);
-  renderLeave();
+  const el = document.getElementById('weekly-days-display');
+  if (el) el.textContent = `週所定労働日数：${days}日（自動）`;
 }
 
 function addLeave() {
@@ -1915,7 +1898,7 @@ function renderLeave() {
   // 入社日欄
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
-  document.getElementById('weekly-days').value = DB.weeklyDays;
+  autoCalcWeeklyDays();
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
