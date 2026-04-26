@@ -741,16 +741,6 @@
     <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
   </div>
 
-  <!-- 給与明細 -->
-  <div class="payslip" id="payslip-card">
-    <div class="payslip-header">
-      <h3>📄 給与明細</h3>
-      <span class="payslip-month" id="payslip-month-label"></span>
-    </div>
-    <div class="payslip-body" id="payslip-body">
-      <div class="payslip-empty">時給を設定すると表示されます</div>
-    </div>
-  </div>
 
   <!-- カレンダー -->
   <div class="card summary-cal">
@@ -2334,9 +2324,6 @@ function renderSummary() {
 
   // 週次サマリー描画
   renderSummaryWeekly(ym);
-
-  // 給与明細を描画
-  renderPayslip(ym, workedDays, sortedDates, days);
 
   const container = document.getElementById('summary-table-container');
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
