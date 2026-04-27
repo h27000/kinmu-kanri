@@ -1,7 +1,11 @@
-const CACHE_NAME = 'kinmu-kanri-v3';
+const CACHE_NAME = 'kinmu-kanri-v4';
 const ASSETS = [
   '/kinmu-kanri/',
   '/kinmu-kanri/index.html',
+  '/kinmu-kanri/styles.css',
+  '/kinmu-kanri/js/db.js',
+  '/kinmu-kanri/js/sync.js',
+  '/kinmu-kanri/js/main.js',
   '/kinmu-kanri/manifest.json',
   '/kinmu-kanri/icon.svg',
 ];
