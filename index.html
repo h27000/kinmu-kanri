@@ -1527,7 +1527,7 @@ function deletePunch(date) {
 function makeTimeSelect(id, value, style = '') {
   let opts = `<option value="">--</option>`;
   for (let h = 0; h <= 26; h++) {
-    for (let m = 0; m < 60; m += 15) {
+    for (let m = 0; m < 60; m += 1) {
       if (h === 26 && m > 0) break;
       const hh = String(h).padStart(2, '0');
       const mm = String(m).padStart(2, '0');
