@@ -1856,7 +1856,7 @@ function autoCalcWeeklyDays() {
     (shifts.length ? shifts.map(s => s.date) : punches.map(p => p.date))
   )].sort();
 
-  let days = 5, needed = 0;
+  let days = 5, needed = 0, needed4 = 0, weekCount = 0;
   if (dates.length > 0) {
     const getMonday = d => {
       const day = d.getDay();
@@ -1865,14 +1865,13 @@ function autoCalcWeeklyDays() {
       mon.setHours(0,0,0,0);
       return mon;
     };
-    const firstMon  = getMonday(new Date(dates[0]));
-    const lastMon   = getMonday(new Date(dates[dates.length - 1]));
-    const weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
-    days   = Math.min(5, Math.max(1, Math.round(dates.length / weekCount)));
-    needed = Math.max(0, Math.ceil(5 * weekCount) - dates.length);
+    const firstMon = getMonday(new Date(dates[0]));
+    const lastMon  = getMonday(new Date(dates[dates.length - 1]));
+    weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
+    days    = Math.min(5, Math.max(1, Math.round(dates.length / weekCount)));
+    needed  = Math.max(0, Math.ceil(5 * weekCount) - dates.length);
+    needed4 = Math.max(0, Math.ceil(4 * weekCount) - dates.length);
   }
-
-  const needed4 = dates.length > 0 ? Math.max(0, Math.ceil(4 * weekCount) - dates.length) : 0;
 
   DB.weeklyDays = days;
   const el = document.getElementById('weekly-days-display');
