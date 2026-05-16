@@ -1530,7 +1530,7 @@ function makeTimeSelect(id, value, style = '') {
   // 時セレクト（0〜26時）
   let hOpts = `<option value="">--</option>`;
   for (let h = 0; h <= 26; h++) {
-    const label = h < 24 ? `${h}時` : `翌${h - 24}時`;
+    const label = h < 24 ? `${h}` : `翌${h - 24}`;
     const sel = curH === h ? 'selected' : '';
     hOpts += `<option value="${h}" ${sel}>${label}</option>`;
   }
@@ -1540,7 +1540,7 @@ function makeTimeSelect(id, value, style = '') {
   for (let m = 0; m < 60; m++) {
     const mm = String(m).padStart(2, '0');
     const sel = curM === m ? 'selected' : '';
-    mOpts += `<option value="${mm}" ${sel}>${mm}分</option>`;
+    mOpts += `<option value="${mm}" ${sel}>${mm}</option>`;
   }
 
   return `
