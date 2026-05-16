@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: hidden; max-width: 100vw; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #fdf0f0; color: #1a202c; min-height: 100vh; }
 
   header {
@@ -49,7 +50,7 @@
   nav button.active { color: #1a202c; border-bottom-color: #1a202c; }
   nav button:hover:not(.active) { color: #1a202c; }
 
-  .tab { display: none; padding: 16px; max-width: 800px; margin: 0 auto; }
+  .tab { display: none; padding: 16px; max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
   .tab.active { display: block; }
 
   /* カード */
@@ -104,7 +105,7 @@
 
   /* テーブル */
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; color: #718096; font-weight: 600; padding: 8px 10px; border-bottom: 2px solid #e2e8f0; }
+  th { text-align: left; color: #718096; font-weight: 600; padding: 8px 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
   td { padding: 9px 10px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #f7fafc; }
@@ -295,7 +296,7 @@
     font-family: inherit;
     outline: none;
   }
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
   .stat-box {
     background: white;
     border-radius: 12px;
@@ -304,6 +305,7 @@
     text-align: center;
   }
   .stat-box .label { font-size: 11px; color: #718096; font-weight: 600; margin-bottom: 6px; }
+  .stat-box .value-row { display: flex; align-items: baseline; gap: 3px; justify-content: center; }
   .stat-box .value { font-size: 22px; font-weight: 700; color: #1a202c; font-variant-numeric: tabular-nums; }
   .stat-box .unit { font-size: 12px; color: #718096; }
   .stat-box.highlight { background: #fff5f5; border: 1px solid #fed7d7; }
@@ -331,37 +333,39 @@
   .week-badge.past { background: #f0f4f8; color: #718096; }
   .week-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 0;
   }
   .week-cell {
-    padding: 12px 14px;
+    padding: 10px 6px;
     border-right: 1px solid #f0f4f8;
     text-align: center;
   }
   .week-cell:last-child { border-right: none; }
   .week-cell .wc-label { font-size: 11px; color: #a0aec0; font-weight: 600; margin-bottom: 4px; }
+  .week-cell .wc-value-row { display: flex; align-items: baseline; gap: 2px; justify-content: center; }
   .week-cell .wc-value { font-size: 18px; font-weight: 700; color: #1a202c; }
   .week-cell .wc-unit  { font-size: 11px; color: #718096; }
   .week-cell.highlight .wc-value { color: #1a202c; }
   .week-days-row {
     display: flex;
     padding: 10px 14px;
-    gap: 6px;
+    gap: 4px;
     border-top: 1px solid #f0f4f8;
-    flex-wrap: wrap;
   }
   .week-day-chip {
+    flex: 1;
     font-size: 11px;
-    padding: 3px 8px;
+    padding: 4px 0;
     border-radius: 6px;
     font-weight: 600;
+    text-align: center;
   }
   .week-day-chip.worked   { background: #fff5f5; color: #1a202c; font-weight: 700; }
   .week-day-chip.planned  { background: #f0fff4; color: #276749; }
   .week-day-chip.off      { background: #f0f4f8; color: #a0aec0; }
   .week-day-chip.sun      { color: #e53e3e; }
-  .week-day-chip.sat      { color: #1a202c; }
+  .week-day-chip.sat      { color: #3182ce; }
 
   /* 給与明細 */
   .payslip {
@@ -510,9 +514,10 @@
     margin-bottom: 16px;
   }
   .leave-summary h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #1a202c; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
-  .leave-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .leave-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
   .leave-cell { text-align: center; padding: 14px 10px; background: #f7fafc; border-radius: 10px; }
   .leave-cell .lc-label { font-size: 11px; color: #718096; font-weight: 600; margin-bottom: 6px; }
+  .leave-cell .lc-value-row { display: flex; align-items: baseline; gap: 2px; justify-content: center; }
   .leave-cell .lc-value { font-size: 26px; font-weight: 700; color: #1a202c; }
   .leave-cell .lc-unit  { font-size: 12px; color: #718096; }
   .leave-cell.remaining { background: #fff5f5; border: 1px solid #fed7d7; }
@@ -558,13 +563,31 @@
     color: #744210;
   }
 
+  /* テーブルははみ出たらカード内でスクロール */
+  #annual-table-container,
+  #summary-table-container,
+  #punch-records-container,
+  #shift-list-container { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+
   @media (max-width: 600px) {
-    .punch-buttons { flex-direction: column; align-items: center; }
-    .btn-in, .btn-out { width: 100%; max-width: 260px; }
+    header { padding: 10px 16px; }
+    header h1 { font-size: 16px; }
+    nav button { padding: 10px 12px; font-size: 13px; }
+    .tab { padding: 10px; }
+    .card { padding: 14px; margin-bottom: 10px; }
+    .punch-main { padding: 6px 0 4px; }
+    .today { font-size: 17px; margin-bottom: 12px; }
+    #clock { font-size: 26px !important; margin: 2px 0 8px !important; }
+    .punch-buttons { flex-direction: row; gap: 10px; margin-bottom: 12px; }
+    .btn-in, .btn-out { padding: 12px 20px; font-size: 16px; min-width: 0; flex: 1; }
+    .punch-status { font-size: 13px; padding: 8px 12px; }
     .form-row { flex-direction: column; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat-box { padding: 10px; }
+    .stat-box .value { font-size: 18px; }
     table { font-size: 12px; }
-    th, td { padding: 7px 6px; }
+    th, td { padding: 6px 5px; }
+    th { white-space: nowrap; }
   }
 </style>
 </head>
@@ -578,7 +601,7 @@
   <button class="active" onclick="switchTab('punch', this)">打刻</button>
   <button onclick="switchTab('shift', this)">シフト</button>
   <button onclick="switchTab('summary', this)">月</button>
-  <button onclick="switchTab('annual', this)">年間</button>
+  <button onclick="switchTab('annual', this)">年</button>
   <button onclick="switchTab('leave', this)">有給</button>
   <button onclick="switchTab('settings', this)">設定</button>
 </nav>
@@ -589,7 +612,6 @@
   <!-- 打刻 -->
   <div class="card">
     <div class="punch-main">
-      <h2>本日の日付</h2>
       <div class="today" id="today-date">--</div>
       <div id="clock" style="font-size:32px;font-weight:700;letter-spacing:3px;font-family:'Helvetica Neue',Arial,sans-serif;font-variant-numeric:tabular-nums;color:#1a202c;margin:4px 0 12px"></div>
       <div class="punch-buttons">
@@ -603,7 +625,6 @@
   <!-- 打刻記録 -->
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
-      <h3>打刻記録</h3>
       <select id="punch-month" onchange="renderPunchRecords()"></select>
     </div>
     <div id="punch-records-container">
@@ -617,35 +638,33 @@
 <!-- シフトタブ -->
 <div id="tab-shift" class="tab">
   <div class="form-card">
-    <h3>シフトを追加</h3>
-    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      <div class="form-group" style="flex:1.5;min-width:120px">
-        <label>日付</label>
-        <input type="date" id="shift-date" style="width:100%">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">日付</label>
+        <input type="date" id="shift-date" style="width:100%;font-size:13px;padding:8px 6px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box">
       </div>
-      <div class="form-group" style="flex:1;min-width:80px">
-        <label>開始</label>
-        <select id="shift-start" class="time-select" onchange="autoFillBreak()">
-          <option value="">--</option>
-        </select>
-      </div>
-      <div class="form-group" style="flex:1;min-width:80px">
-        <label>終了</label>
-        <select id="shift-end" class="time-select" onchange="autoFillBreak()">
-          <option value="">--</option>
-        </select>
-      </div>
-      <input type="hidden" id="shift-break" value="60">
-      <input type="hidden" id="shift-memo" value="">
-      <div style="flex-shrink:0;padding-bottom:2px">
-        <button class="btn-primary" onclick="addShift()" style="width:64px">追加</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+        <div>
+          <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">開始</label>
+          <select id="shift-start" class="time-select" onchange="autoFillBreak()" style="width:100%">
+            <option value="">--</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#718096;display:block;margin-bottom:4px">終了</label>
+          <select id="shift-end" class="time-select" onchange="autoFillBreak()" style="width:100%">
+            <option value="">--</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="addShift()" style="white-space:nowrap;padding:9px 14px">追加</button>
       </div>
     </div>
+    <input type="hidden" id="shift-break" value="60">
+    <input type="hidden" id="shift-memo" value="">
   </div>
 
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
-      <h3>シフト一覧</h3>
       <select id="shift-month" onchange="renderShiftList()"></select>
     </div>
     <div id="shift-list-container">
@@ -669,6 +688,7 @@
           style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
       </div>
+      <div id="weekly-days-display" style="font-size:13px;font-weight:600;color:#4a5568"></div>
       <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
     </div>
   </div>
@@ -725,17 +745,6 @@
     <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
   </div>
 
-  <!-- 給与明細 -->
-  <div class="payslip" id="payslip-card">
-    <div class="payslip-header">
-      <h3>📄 給与明細</h3>
-      <span class="payslip-month" id="payslip-month-label"></span>
-    </div>
-    <div class="payslip-body" id="payslip-body">
-      <div class="payslip-empty">時給を設定すると表示されます</div>
-    </div>
-  </div>
-
   <!-- カレンダー -->
   <div class="card summary-cal">
     <div class="cal-header-row">
@@ -779,19 +788,19 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-box"><div class="label">年間実労働時間</div><div class="value" id="ann-actual">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">年間予定時間</div><div class="value" id="ann-planned">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">年間出勤日数</div><div class="value" id="ann-days">--</div><div class="unit">日</div></div>
-    <div class="stat-box"><div class="label">月平均実働</div><div class="value" id="ann-avg">--</div><div class="unit">時間/月</div></div>
-    <div class="stat-box"><div class="label">年間交通費</div><div class="value" id="ann-transport">--</div><div class="unit">円</div></div>
-    <div class="stat-box highlight"><div class="label">年間給与</div><div class="value" id="ann-wage">--</div><div class="unit">円</div></div>
+    <div class="stat-box"><div class="label">年実労働</div><div class="value-row"><div class="value" id="ann-actual">--</div><div class="unit">h</div></div></div>
+    <div class="stat-box"><div class="label">年シフト</div><div class="value-row"><div class="value" id="ann-planned">--</div><div class="unit">h</div></div></div>
+    <div class="stat-box"><div class="label">年出勤</div><div class="value-row"><div class="value" id="ann-days">--</div><div class="unit">日</div></div></div>
+    <div class="stat-box"><div class="label">月平均日数</div><div class="value-row"><div class="value" id="ann-avg">--</div><div class="unit">日</div></div></div>
+    <div class="stat-box"><div class="label">年交通費</div><div class="value-row"><div class="value" id="ann-transport">--</div><div class="unit">円</div></div></div>
+    <div class="stat-box highlight"><div class="label">年給与</div><div class="value-row"><div class="value" id="ann-wage">--</div><div class="unit">円</div></div></div>
   </div>
 
   <div class="bar-chart">
     <h3>月別勤務時間グラフ</h3>
     <div class="bar-legend">
       <div class="legend-item"><div class="legend-dot" style="background:#AA0000"></div>実労働</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0;border:1px solid #cbd5e0"></div>予定</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0;border:1px solid #cbd5e0"></div>シフト</div>
     </div>
     <div id="annual-chart"></div>
   </div>
@@ -960,6 +969,8 @@ const DB = {
   // 有給管理
   get hireDate()    { return localStorage.getItem('wt_hire_date') || ''; },
   set hireDate(v)   { localStorage.setItem('wt_hire_date', v); },
+  get weeklyDays()  { return parseInt(localStorage.getItem('wt_weekly_days') || '5'); },
+  set weeklyDays(v) { localStorage.setItem('wt_weekly_days', String(v)); },
   get leaveUsed()   { return JSON.parse(localStorage.getItem('wt_leave_used') || '[]'); },
   set leaveUsed(v)  { localStorage.setItem('wt_leave_used', JSON.stringify(v)); },
   // 月別時給 { "2026-01": 1100, "2026-03": 1200, ... }
@@ -1064,9 +1075,19 @@ function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 function minutesToHM(m) {
   const h = Math.floor(Math.abs(m) / 60);
   const min = Math.abs(m) % 60;
+  return min === 0 ? `${m < 0 ? '-' : ''}${h}` : `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
+}
+function minutesToHMFull(m) {
+  const h = Math.floor(Math.abs(m) / 60);
+  const min = Math.abs(m) % 60;
   return `${m < 0 ? '-' : ''}${h}:${pad(min)}`;
 }
+function minutesToHMShort(m) { return minutesToHM(m); }
 function minutesToH(m) { return (m / 60).toFixed(1); }
+function dowSpan(dow) {
+  const c = dow === '日' ? '#e53e3e' : dow === '土' ? '#3182ce' : '';
+  return c ? `(<span style="color:${c}">${dow}</span>)` : `(${dow})`;
+}
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -1096,7 +1117,7 @@ function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = fmtTime(now);
   document.getElementById('today-date').textContent =
-    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 (${['日','月','火','水','木','金','土'][now.getDay()]})`;
+    `${now.getMonth()+1}月${now.getDate()}日 (${['日','月','火','水','木','金','土'][now.getDay()]})`;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1559,40 +1580,49 @@ function saveEditPunch(date) {
 function renderPunchRecords() {
   const container = document.getElementById('punch-records-container');
   const ym = document.getElementById('punch-month')?.value || '';
-  const allPunches = [...DB.punches].sort((a, b) => b.date.localeCompare(a.date));
+  const allPunches = [...DB.punches].sort((a, b) => a.date.localeCompare(b.date));
   const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
-  const hasWage = DB.hourlyRate > 0;
+  const hasWage = DB.hourlyRate > 0 || Object.keys(DB.hourlyRates).length > 0;
   let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>実働</th>${hasWage ? '<th>給与</th>' : ''}<th></th></tr></thead><tbody>`;
 
   for (const p of punches) {
     const mins = calcPunchMinutes(p);
     const [y, m, d] = p.date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(p.date).getDay()];
-    const dateStr = `${y}/${m}/${d}(${dow})`;
+    const dateStr = `${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}`;
     const ym = `${y}-${m}`;
     const wage = calcWage(mins, ym);
 
     if (editingDate === p.date) {
-      // 編集行（2行で表示: 1行目=日付・出退勤、2行目=休憩）
-      const colSpan = hasWage ? 7 : 6;
+      const colSpan = hasWage ? 6 : 5;
       html += `<tr class="edit-row">
-        <td><input class="time-input" type="date" id="edit-date-${p.date}" value="${p.date}" style="font-size:12px;padding:4px 6px;width:130px"></td>
-        <td><input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}"></td>
-        <td><input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}"></td>
-        <td colspan="2" style="white-space:nowrap">
-          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-            <span style="font-size:11px;color:#718096">入り</span>
-            <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="width:90px">
-            <span style="font-size:11px;color:#718096">終わり</span>
-            <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="width:90px">
+        <td colspan="${colSpan}" style="padding:8px 6px">
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">日</span>
+                <input class="time-input" type="date" id="edit-date-${p.date}" value="${p.date}" style="flex:1;min-width:0;width:auto">
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">出</span>
+                <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">退</span>
+                <input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}" style="flex:1;min-width:0">
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">休</span>
+                <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="flex:1;min-width:0">
+                <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">〜</span>
+                <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="flex:1;min-width:0">
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;justify-content:center">
+              <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')" style="padding:8px 14px;font-size:13px">保存</button>
+              <button class="btn-sm btn-danger" onclick="deletePunch('${p.date}')" style="padding:8px 14px;font-size:13px">削除</button>
+            </div>
           </div>
-        </td>
-        ${hasWage ? '<td></td>' : ''}
-        <td style="white-space:nowrap">
-          <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')">保存</button>
-          <button class="btn-sm btn-cancel" style="margin-left:4px" onclick="cancelEditPunch()">取消</button>
         </td>
       </tr>`;
     } else {
@@ -1614,9 +1644,8 @@ function renderPunchRecords() {
         <td>${breakStr}</td>
         <td>${timeBadge}</td>
         ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
-        <td style="white-space:nowrap">
+        <td>
           <button class="btn-sm btn-edit" onclick="startEditPunch('${p.date}')">編集</button>
-          <button class="btn-sm btn-danger" style="margin-left:4px" onclick="deletePunch('${p.date}')">削除</button>
         </td>
       </tr>`;
     }
@@ -1676,6 +1705,7 @@ function addShift() {
   DB.shifts = shifts;
   SYNC.push();
   saveAutoBackup();
+  autoCalcWeeklyDays();
   showToast('シフトを追加しました');
   document.getElementById('shift-start').value = 9;
   document.getElementById('shift-end').value   = 15;
@@ -1687,6 +1717,7 @@ function deleteShift(id) {
   if (!confirm('このシフトを削除しますか？')) return;
   DB.shifts = DB.shifts.filter(s => s.id !== id);
   SYNC.push();
+  autoCalcWeeklyDays();
   renderShiftList();
   showToast('削除しました');
 }
@@ -1694,40 +1725,23 @@ function deleteShift(id) {
 function renderShiftList() {
   const container = document.getElementById('shift-list-container');
   const ym = document.getElementById('shift-month')?.value || '';
-  const allShifts = [...DB.shifts].sort((a, b) => b.date.localeCompare(a.date));
+  const allShifts = [...DB.shifts].sort((a, b) => a.date.localeCompare(b.date));
   const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
   if (!shifts.length) { container.innerHTML = '<p class="empty-msg">シフトがありません</p>'; return; }
   const DOWS = ['日','月','火','水','木','金','土'];
-  const DOW_COLORS = { '日':'#e53e3e','土':'#3182ce' };
-  let html = '';
+  let html = `<table><thead><tr><th>日付</th><th>開始</th><th>終了</th><th>休憩</th><th></th></tr></thead><tbody>`;
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
     const dow = DOWS[new Date(s.date).getDay()];
-    const dowColor = DOW_COLORS[dow] || 'white';
-    html += `
-    <div class="shift-card">
-      <div class="shift-date-block">
-        <div class="s-month">${parseInt(m)}月</div>
-        <div class="s-day">${parseInt(d)}</div>
-        <div class="s-dow" style="color:${dowColor}">${dow}</div>
-      </div>
-      <div class="shift-info">
-        <div class="shift-time-row">
-          <span>${s.start}</span>
-          <span class="shift-time-arrow">→</span>
-          <span>${s.end}</span>
-        </div>
-        <div class="shift-meta-row">
-          <span class="badge badge-blue">${minutesToHM(s.work)}</span>
-          <span class="shift-meta-item">休憩 ${s.break}分</span>
-        </div>
-        ${s.memo ? `<div class="shift-memo-text">📝 ${s.memo}</div>` : ''}
-      </div>
-      <div class="shift-actions">
-        <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
-      </div>
-    </div>`;
+    html += `<tr>
+      <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td>${s.break}分</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button></td>
+    </tr>`;
   }
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
@@ -1770,12 +1784,12 @@ function renderPayslip(ym, workedDays, sortedDates, days) {
     </div>
     <div class="payslip-divider">支給</div>
     <div class="payslip-row">
-      <div><div class="pl-label">基本給</div><div class="pl-sub">¥${rate.toLocaleString()} × ${(normalMins/60).toFixed(1)}h</div></div>
+      <div><div class="pl-label">基本給</div><div class="pl-sub">¥${rate.toLocaleString()} × ${minutesToHM(normalMins)}h</div></div>
       <div class="pl-amount">${fmtWage(basicWage)}</div>
     </div>
     ${overMins > 0 ? `
     <div class="payslip-row">
-      <div><div class="pl-label">残業代</div><div class="pl-sub">¥${rate.toLocaleString()} × 1.25 × ${(overMins/60).toFixed(1)}h</div></div>
+      <div><div class="pl-label">残業代</div><div class="pl-sub">¥${rate.toLocaleString()} × 1.25 × ${minutesToHM(overMins)}h</div></div>
       <div class="pl-amount" style="color:#c05621">${fmtWage(overtimeWage)}</div>
     </div>` : ''}
     ${transport > 0 ? `
@@ -1792,45 +1806,38 @@ function renderPayslip(ym, workedDays, sortedDates, days) {
 
 // ---- 有給管理 ----
 
-// 労働基準法に基づく付与ステージ (継続勤務月数 → 付与日数)
-const LEAVE_STAGES = [
-  { months:  6, days: 10 },
-  { months: 18, days: 11 },
-  { months: 30, days: 12 },
-  { months: 42, days: 14 },
-  { months: 54, days: 16 },
-  { months: 66, days: 18 },
-  { months: 78, days: 20 },
-];
+// 労働基準法に基づく比例付与テーブル (継続勤務月数×週所定労働日数)
+const LEAVE_MONTHS = [6, 18, 30, 42, 54, 66, 78];
+const LEAVE_DAYS_TABLE = {
+  5: [10, 11, 12, 14, 16, 18, 20],
+  4: [ 7,  8,  9, 10, 12, 13, 15],
+  3: [ 5,  6,  6,  8,  9, 10, 11],
+  2: [ 3,  4,  4,  5,  6,  6,  7],
+  1: [ 1,  2,  2,  2,  3,  3,  3],
+};
+function getLeaveDays(monthsIdx) {
+  const wd = Math.min(5, Math.max(1, DB.weeklyDays));
+  return LEAVE_DAYS_TABLE[wd][monthsIdx];
+}
 
 function diffMonths(from, to) {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
 }
 
 function calcLeaveGrants(hireDate) {
-  // hireDate: "YYYY-MM-DD"
   const hire = new Date(hireDate);
   const now  = new Date();
-  const grants = [];
-  for (const stage of LEAVE_STAGES) {
+  return LEAVE_MONTHS.map((months, i) => {
     const grantDate = new Date(hire);
-    grantDate.setMonth(grantDate.getMonth() + stage.months);
-    const isPast = grantDate <= now;
-    grants.push({ months: stage.months, days: stage.days, grantDate, isPast });
-  }
-  return grants;
+    grantDate.setMonth(grantDate.getMonth() + months);
+    return { months, days: getLeaveDays(i), grantDate, isPast: grantDate <= now };
+  });
 }
 
 function calcTotalGranted(hireDate) {
-  // 付与済み日数の合計（2年以内有効 → 最大2回分）
-  const hire = new Date(hireDate);
-  const now  = new Date();
   const grants = calcLeaveGrants(hireDate).filter(g => g.isPast);
   if (!grants.length) return 0;
-
-  // 直近2回分（2年繰越）を合計
-  const recent = grants.slice(-2);
-  return recent.reduce((sum, g) => sum + g.days, 0);
+  return grants.slice(-2).reduce((sum, g) => sum + g.days, 0);
 }
 
 function saveHireDate() {
@@ -1840,6 +1847,47 @@ function saveHireDate() {
   SYNC.push();
   showToast('入社日を保存しました');
   renderLeave();
+}
+
+function autoCalcWeeklyDays() {
+  const shifts  = DB.shifts;
+  const punches = DB.punches.filter(p => p.in && p.out);
+  const dates   = [...new Set(
+    (shifts.length ? shifts.map(s => s.date) : punches.map(p => p.date))
+  )].sort();
+
+  let days = 5, needed = 0;
+  if (dates.length > 0) {
+    const getMonday = d => {
+      const day = d.getDay();
+      const mon = new Date(d);
+      mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+      mon.setHours(0,0,0,0);
+      return mon;
+    };
+    const firstMon  = getMonday(new Date(dates[0]));
+    const lastMon   = getMonday(new Date(dates[dates.length - 1]));
+    const weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
+    days   = Math.min(5, Math.max(1, Math.round(dates.length / weekCount)));
+    needed = Math.max(0, Math.ceil(5 * weekCount) - dates.length);
+  }
+
+  DB.weeklyDays = days;
+  const el = document.getElementById('weekly-days-display');
+  if (!el) return;
+  if (days >= 5 || needed === 0) {
+    el.innerHTML = `<span style="color:#4a5568;font-weight:600">週所定労働日数：${days}日（自動）</span>`;
+  } else {
+    const hd = DB.hireDate;
+    const nextGrant = hd ? calcLeaveGrants(hd).find(g => !g.isPast) : null;
+    let suffix = '';
+    if (nextGrant) {
+      const g = nextGrant.grantDate;
+      suffix = `（${g.getMonth()+1}/${g.getDate()}の付与まで）`;
+    }
+    el.innerHTML = `<span style="color:#4a5568;font-weight:600">週所定労働日数：${days}日（自動）</span>
+      <span style="font-size:12px;color:#e53e3e;margin-left:8px">週5まであと${needed}日${suffix}</span>`;
+  }
 }
 
 function addLeave() {
@@ -1868,6 +1916,7 @@ function renderLeave() {
   // 入社日欄
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
+  autoCalcWeeklyDays();
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
@@ -1897,18 +1946,15 @@ function renderLeave() {
     <div class="leave-grid">
       <div class="leave-cell">
         <div class="lc-label">付与日数</div>
-        <div class="lc-value">${granted}</div>
-        <div class="lc-unit">日</div>
+        <div class="lc-value-row"><div class="lc-value">${granted}</div><div class="lc-unit">日</div></div>
       </div>
       <div class="leave-cell">
         <div class="lc-label">使用日数</div>
-        <div class="lc-value">${used}</div>
-        <div class="lc-unit">日</div>
+        <div class="lc-value-row"><div class="lc-value">${used}</div><div class="lc-unit">日</div></div>
       </div>
       <div class="leave-cell remaining">
         <div class="lc-label">残日数</div>
-        <div class="lc-value">${remain}</div>
-        <div class="lc-unit">日</div>
+        <div class="lc-value-row"><div class="lc-value">${remain}</div><div class="lc-unit">日</div></div>
       </div>
     </div>
     <div class="leave-progress">
@@ -1923,7 +1969,7 @@ function renderLeave() {
       <div style="font-size:12px;font-weight:600;color:#718096;margin-bottom:8px">付与スケジュール</div>
       ${grants.map(g => {
         const [y,m,d] = [g.grantDate.getFullYear(), g.grantDate.getMonth()+1, g.grantDate.getDate()];
-        const label = `${y}/${pad(m)}/${pad(d)}　+${g.days}日`;
+        const label = `${y}/${m}/${d}　+${g.days}日`;
         return `<div class="leave-grant-item">
           <div class="leave-grant-dot ${g.isPast ? 'done' : 'future'}"></div>
           <span style="flex:1;color:${g.isPast ? '#1a202c' : '#a0aec0'}">${label}</span>
@@ -1949,7 +1995,7 @@ function renderLeaveList() {
     const [y,m,d] = r.date.split('-');
     const dow = DOW[new Date(r.date).getDay()];
     html += `<tr>
-      <td>${y}/${m}/${d}(${dow})</td>
+      <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
       <td style="color:#718096;font-size:13px">${r.memo || '-'}</td>
       <td><button class="btn-sm btn-danger" onclick="deleteLeave(${r.id})">削除</button></td>
     </tr>`;
@@ -2063,29 +2109,10 @@ function renderWeekly() {
         <span class="week-badge ${isCurrentWeek ? 'current' : 'past'}">${isCurrentWeek ? '今週' : '終了'}</span>
       </div>
       <div class="week-grid">
-        <div class="week-cell">
-          <div class="wc-label">出勤</div>
-          <div class="wc-value">${workedDays}</div>
-          <div class="wc-unit">日</div>
-        </div>
-        <div class="week-cell">
-          <div class="wc-label">実働</div>
-          <div class="wc-value">${actualMins ? (actualMins/60).toFixed(1) : '-'}</div>
-          <div class="wc-unit">時間</div>
-        </div>
-        <div class="week-cell">
-          <div class="wc-label">予定</div>
-          <div class="wc-value">${plannedMins ? (plannedMins/60).toFixed(1) : '-'}</div>
-          <div class="wc-unit">時間</div>
-        </div>
-        ${hasWage ? `<div class="week-cell highlight">
-          <div class="wc-label">給与</div>
-          <div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div>
-        </div>` : ''}
-        ${hasTrans ? `<div class="week-cell">
-          <div class="wc-label">交通費</div>
-          <div class="wc-value" style="font-size:14px">${transport !== null ? '¥'+transport.toLocaleString() : '-'}</div>
-        </div>` : ''}
+        <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value-row"><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div></div>
+        <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value-row"><div class="wc-value">${actualMins ? minutesToHM(actualMins) : '-'}</div>${actualMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        <div class="week-cell"><div class="wc-label">シフト</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value-row"><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div></div>` : '<div class="week-cell"></div>'}
       </div>
       <div class="week-days-row">${dayChips}</div>
     </div>`;
@@ -2174,11 +2201,10 @@ function renderSummaryWeekly(ym) {
         <span class="week-badge ${isCurrentWeek ? 'current' : 'past'}">${isCurrentWeek ? '今週' : '終了'}</span>
       </div>
       <div class="week-grid">
-        <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div>
-        <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value">${actualMins ? (actualMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
-        <div class="week-cell"><div class="wc-label">予定</div><div class="wc-value">${plannedMins ? (plannedMins/60).toFixed(1) : '-'}</div><div class="wc-unit">時間</div></div>
-        ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div>` : ''}
-        ${hasTrans ? `<div class="week-cell"><div class="wc-label">交通費</div><div class="wc-value" style="font-size:14px">${transport !== null ? '¥'+transport.toLocaleString() : '-'}</div></div>` : ''}
+        <div class="week-cell"><div class="wc-label">出勤</div><div class="wc-value-row"><div class="wc-value">${workedDays}</div><div class="wc-unit">日</div></div></div>
+        <div class="week-cell"><div class="wc-label">実働</div><div class="wc-value-row"><div class="wc-value">${actualMins ? minutesToHM(actualMins) : '-'}</div>${actualMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        <div class="week-cell"><div class="wc-label">シフト</div><div class="wc-value-row"><div class="wc-value">${plannedMins ? minutesToHM(plannedMins) : '-'}</div>${plannedMins ? '<div class="wc-unit">h</div>' : ''}</div></div>
+        ${hasWage ? `<div class="week-cell highlight"><div class="wc-label">給与</div><div class="wc-value-row"><div class="wc-value" style="font-size:14px">${wage !== null ? '¥'+wage.toLocaleString() : '-'}</div></div></div>` : '<div class="week-cell"></div>'}
       </div>
       <div class="week-days-row">${dayChips}</div>
     </div>`;
@@ -2249,13 +2275,14 @@ function renderSummaryCalendar(ym, days) {
 function initTabMonthSelector(id) {
   const sel = document.getElementById(id);
   if (!sel) return;
-  const now = new Date();
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+  const year = new Date().getFullYear();
+  const cur  = `${year}-${pad(new Date().getMonth()+1)}`;
+  for (let m = 1; m <= 12; m++) {
+    const val = `${year}-${pad(m)}`;
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    opt.textContent = `${year}年${m}月`;
+    if (val === cur) opt.selected = true;
     sel.appendChild(opt);
   }
 }
@@ -2263,13 +2290,14 @@ function initTabMonthSelector(id) {
 // ---- 月次集計 ----
 function initMonthSelector() {
   const sel = document.getElementById('summary-month');
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+  const year = new Date().getFullYear();
+  const cur  = `${year}-${pad(new Date().getMonth()+1)}`;
+  for (let m = 1; m <= 12; m++) {
+    const val = `${year}-${pad(m)}`;
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    opt.textContent = `${year}年${m}月`;
+    if (val === cur) opt.selected = true;
     sel.appendChild(opt);
   }
 }
@@ -2306,10 +2334,10 @@ function renderSummary() {
 
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * workedDays : null;
 
-  document.getElementById('stat-actual').textContent    = minutesToH(totalActual);
-  document.getElementById('stat-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('stat-actual').textContent    = minutesToHM(totalActual);
+  document.getElementById('stat-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('stat-days').textContent      = workedDays;
-  // 週平均出勤：その月に1日でも含まれる週の数で割る
+  // 週平均出勤日数: その月に含まれる週数で割る
   const [sy, sm] = ym.split('-').map(Number);
   const firstDay = new Date(sy, sm - 1, 1);
   const lastDay  = new Date(sy, sm, 0);
@@ -2319,7 +2347,8 @@ function renderSummary() {
     weekSet.add(dateToStr(ws));
   }
   const weekCount = weekSet.size;
-  document.getElementById('stat-avg').textContent = weekCount > 0 ? (workedDays / weekCount).toFixed(1) : '0.0';
+  const statAvgVal = weekCount > 0 ? workedDays / weekCount : 0;
+  document.getElementById('stat-avg').textContent = statAvgVal % 1 === 0 ? String(statAvgVal) : statAvgVal.toFixed(1);
   document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
   document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
@@ -2329,35 +2358,25 @@ function renderSummary() {
   // 週次サマリー描画
   renderSummaryWeekly(ym);
 
-  // 給与明細を描画
-  renderPayslip(ym, workedDays, sortedDates, days);
-
   const container = document.getElementById('summary-table-container');
   if (!sortedDates.length) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = DB.getRate(ym) > 0;
-  const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>予定</th><th>差分</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>日</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
   for (const date of sortedDates) {
     const p = days[date].punch;
     const actualMins  = p ? calcPunchMinutes(p) : 0;
     const plannedMins = (days[date].shifts || []).reduce((a, s) => a + s.work, 0);
-    const diff = actualMins - plannedMins;
+    const overtimeMins = plannedMins > 0 ? Math.max(0, actualMins - plannedMins) : 0;
     const [dy, dm, dd] = date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-    const diffStr = diff === 0 ? '-' :
-      `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
-    const wage = calcWage(actualMins, date.substring(0, 7));
-    const transport = (hasTransport && p && actualMins > 0) ? DB.transportFee : null;
+    const wage = actualMins > 0 ? calcWage(actualMins, date.substring(0, 7)) : null;
     html += `<tr>
-      <td>${dy}/${dm}/${dd}(${dow})</td>
-      <td>${p?.in ?? '-'}</td>
-      <td>${p?.out ?? '-'}</td>
+      <td>${parseInt(dm)}/${parseInt(dd)}${dowSpan(dow)}</td>
+      <td>${plannedMins ? minutesToHMFull(plannedMins) : '-'}</td>
       <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
-      <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
-      <td>${diffStr}</td>
+      <td>${overtimeMins ? '<span class="badge badge-yellow">'+minutesToHM(overtimeMins)+'</span>' : '-'}</td>
       ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
-      ${hasTransport ? `<td>${transport !== null ? fmtWage(transport) : '-'}</td>` : ''}
     </tr>`;
   }
   html += '</tbody></table>';
@@ -2420,29 +2439,32 @@ function initYearSelector() {
 function getMonthData(ym) {
   const punches = DB.punches.filter(p => p.date.startsWith(ym));
   const shifts  = DB.shifts.filter(s => s.date.startsWith(ym));
-  let actualMins = 0, plannedMins = 0, workedDays = 0;
+  let actualMins = 0, plannedMins = 0, workedDays = 0, overtimeMins = 0;
   const dateSet = new Set([...punches.map(p => p.date), ...shifts.map(s => s.date)]);
   for (const date of dateSet) {
     const p  = punches.find(x => x.date === date);
     const ss = shifts.filter(x => x.date === date);
     const a  = p ? calcPunchMinutes(p) : 0;
+    const plan = ss.reduce((acc, s) => acc + s.work, 0);
     if (a > 0) { actualMins += a; workedDays++; }
-    plannedMins += ss.reduce((acc, s) => acc + s.work, 0);
+    plannedMins += plan;
+    if (a > plan && plan > 0) overtimeMins += (a - plan);
   }
-  return { actualMins, plannedMins, workedDays };
+  return { actualMins, plannedMins, workedDays, overtimeMins };
 }
 
 function renderAnnual() {
   const year = document.getElementById('annual-year').value;
-  let totalActual = 0, totalPlanned = 0, totalDays = 0;
+  let totalActual = 0, totalPlanned = 0, totalDays = 0, totalOvertime = 0;
   const months = [];
   for (let m = 1; m <= 12; m++) {
     const ym = `${year}-${pad(m)}`;
     const data = getMonthData(ym);
     months.push({ m, ym, ...data });
-    totalActual += data.actualMins;
-    totalPlanned += data.plannedMins;
-    totalDays += data.workedDays;
+    totalActual   += data.actualMins;
+    totalPlanned  += data.plannedMins;
+    totalDays     += data.workedDays;
+    totalOvertime += data.overtimeMins;
   }
   // 年間合計給与: 日ごとに正確に計算して合算
   const totalWage = (() => {
@@ -2457,10 +2479,11 @@ function renderAnnual() {
 
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * totalDays : null;
 
-  document.getElementById('ann-actual').textContent    = minutesToH(totalActual);
-  document.getElementById('ann-planned').textContent   = minutesToH(totalPlanned);
+  document.getElementById('ann-actual').textContent    = minutesToHM(totalActual);
+  document.getElementById('ann-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('ann-days').textContent      = totalDays;
-  document.getElementById('ann-avg').textContent       = activeMonths > 0 ? (totalActual / 60 / activeMonths).toFixed(1) : '0.0';
+  const annAvgVal = activeMonths > 0 ? totalDays / activeMonths : 0;
+  document.getElementById('ann-avg').textContent = annAvgVal % 1 === 0 ? annAvgVal : annAvgVal.toFixed(1);
   document.getElementById('ann-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
   document.getElementById('ann-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
@@ -2476,7 +2499,7 @@ function renderAnnual() {
         <div class="bar-track"><div class="bar-fill-actual" style="width:${aW}%"></div></div>
         <div class="bar-track"><div class="bar-fill-planned" style="width:${pW}%"></div></div>
       </div>
-      <div class="bar-label">${actualMins ? minutesToH(actualMins)+'h' : '-'}${wStr !== null ? ' / '+fmtWage(wStr) : ''}</div>
+      <div class="bar-label">${actualMins ? minutesToHM(actualMins) : '-'}${wStr !== null ? ' / '+fmtWage(wStr) : ''}</div>
     </div>`;
   }).join('');
 
@@ -2486,36 +2509,25 @@ function renderAnnual() {
   if (!hasData) { container.innerHTML = '<p class="empty-msg">データがありません</p>'; return; }
 
   const hasWage = months.some(({ ym: mym }) => DB.getRate(mym) > 0);
-  const hasTransport = DB.transportFee > 0;
-  let html = `<table><thead><tr><th>月</th><th>実労働</th><th>予定</th><th>差分</th><th>出勤</th>${hasWage ? '<th>給与</th>' : ''}${hasTransport ? '<th>交通費</th>' : ''}</tr></thead><tbody>`;
-  for (const { m, ym: mym, actualMins, plannedMins, workedDays } of months) {
-    const diff = actualMins - plannedMins;
-    const diffStr = (actualMins === 0 && plannedMins === 0) ? '-' :
-      diff === 0 ? '±0:00' :
-      `<span style="color:${diff>0?'#276749':'#AA0000'};font-weight:600">${diff>0?'+':''}${minutesToHM(diff)}</span>`;
+  let html = `<table style="font-size:12px"><thead><tr><th>月</th><th>出勤</th><th>シフト</th><th>実働</th><th>残業</th>${hasWage ? '<th>給与</th>' : ''}</tr></thead><tbody>`;
+  for (const { m, ym: mym, actualMins, plannedMins, workedDays, overtimeMins } of months) {
     const wage = calcMonthWage(mym);
-    const transport = hasTransport ? DB.transportFee * workedDays : null;
     html += `<tr>
-      <td>${year}/${pad(m)}</td>
-      <td>${actualMins ? '<span class="badge badge-blue">'+minutesToHM(actualMins)+'</span>' : '-'}</td>
+      <td style="white-space:nowrap">${m}月</td>
+      <td>${workedDays > 0 ? workedDays : '-'}</td>
       <td>${plannedMins ? minutesToHM(plannedMins) : '-'}</td>
-      <td>${diffStr}</td>
-      <td>${workedDays > 0 ? workedDays+'日' : '-'}</td>
-      ${hasWage ? `<td>${wage !== null ? '<span class="wage-chip">'+fmtWage(wage)+'</span>' : '-'}</td>` : ''}
-      ${hasTransport ? `<td>${transport ? fmtWage(transport) : '-'}</td>` : ''}
+      <td>${actualMins ? minutesToHM(actualMins) : '-'}</td>
+      <td>${overtimeMins ? minutesToHM(overtimeMins) : '-'}</td>
+      ${hasWage ? `<td>${wage !== null ? fmtWage(wage) : '-'}</td>` : ''}
     </tr>`;
   }
-  const totalDiff = totalActual - totalPlanned;
-  const totalDiffStr = totalDiff === 0 ? '±0:00' :
-    `<span style="color:${totalDiff>0?'#276749':'#AA0000'};font-weight:600">${totalDiff>0?'+':''}${minutesToHM(totalDiff)}</span>`;
   html += `<tr style="font-weight:700;background:#f7fafc">
-    <td>合計</td>
-    <td>${minutesToHM(totalActual)}</td>
-    <td>${minutesToHM(totalPlanned)}</td>
-    <td>${totalDiffStr}</td>
-    <td>${totalDays}日</td>
-    ${hasWage ? `<td>${totalWage !== null ? '<span class="wage-chip">'+fmtWage(totalWage)+'</span>' : '-'}</td>` : ''}
-    ${hasTransport ? `<td>${totalTransport !== null ? '<span class="wage-chip">'+fmtWage(totalTransport)+'</span>' : '-'}</td>` : ''}
+    <td style="white-space:nowrap">合計</td>
+    <td>${totalDays > 0 ? totalDays : '-'}</td>
+    <td>${totalPlanned ? minutesToHM(totalPlanned) : '-'}</td>
+    <td>${totalActual ? minutesToHM(totalActual) : '-'}</td>
+    <td>${totalOvertime ? minutesToHM(totalOvertime) : '-'}</td>
+    ${hasWage ? `<td>${totalWage !== null ? fmtWage(totalWage) : '-'}</td>` : ''}
   </tr>`;
   html += '</tbody></table>';
   container.innerHTML = html;
