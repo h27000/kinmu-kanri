@@ -1523,6 +1523,24 @@ function deletePunch(date) {
   showToast('削除しました');
 }
 
+// ---- 時刻セレクト生成（15分刻み 0:00〜翌2:00）----
+function makeTimeSelect(id, value, style = '') {
+  let opts = `<option value="">--</option>`;
+  for (let h = 0; h <= 26; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      if (h === 26 && m > 0) break;
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const v  = `${hh}:${mm}`;
+      // 表示は0〜23時はそのまま、24〜は「翌X時」
+      const label = h < 24 ? v : `翌${String(h-24).padStart(2,'0')}:${mm}`;
+      const sel = value === v ? 'selected' : '';
+      opts += `<option value="${v}" ${sel}>${label}</option>`;
+    }
+  }
+  return `<select id="${id}" class="time-select" style="flex:1;min-width:0;${style}">${opts}</select>`;
+}
+
 // ---- 打刻の編集 ----
 let editingDate = null;
 
@@ -1607,15 +1625,15 @@ function renderPunchRecords() {
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">出</span>
-                <input class="time-input" type="time" id="edit-in-${p.date}" value="${p.in ?? ''}" style="flex:1;min-width:0">
+                ${makeTimeSelect(`edit-in-${p.date}`, p.in ?? '')}
                 <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">退</span>
-                <input class="time-input" type="time" id="edit-out-${p.date}" value="${p.out ?? ''}" style="flex:1;min-width:0">
+                ${makeTimeSelect(`edit-out-${p.date}`, p.out ?? '')}
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0">休</span>
-                <input class="time-input" type="time" id="edit-break-in-${p.date}" value="${p.breakIn ?? ''}" style="flex:1;min-width:0">
+                ${makeTimeSelect(`edit-break-in-${p.date}`, p.breakIn ?? '')}
                 <span style="font-size:11px;color:#718096;width:16px;flex-shrink:0;text-align:center">〜</span>
-                <input class="time-input" type="time" id="edit-break-out-${p.date}" value="${p.breakOut ?? ''}" style="flex:1;min-width:0">
+                ${makeTimeSelect(`edit-break-out-${p.date}`, p.breakOut ?? '')}
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;justify-content:center">
