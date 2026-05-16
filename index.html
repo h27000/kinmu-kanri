@@ -1523,22 +1523,39 @@ function deletePunch(date) {
   showToast('削除しました');
 }
 
-// ---- 時刻セレクト生成（15分刻み 0:00〜翌2:00）----
+// ---- 時刻セレクト生成（時・分 別々）----
 function makeTimeSelect(id, value, style = '') {
-  let opts = `<option value="">--</option>`;
+  const [curH, curM] = value ? value.split(':').map(Number) : [null, null];
+
+  // 時セレクト（0〜26時）
+  let hOpts = `<option value="">--</option>`;
   for (let h = 0; h <= 26; h++) {
-    for (let m = 0; m < 60; m += 1) {
-      if (h === 26 && m > 0) break;
-      const hh = String(h).padStart(2, '0');
-      const mm = String(m).padStart(2, '0');
-      const v  = `${hh}:${mm}`;
-      // 表示は0〜23時はそのまま、24〜は「翌X時」
-      const label = h < 24 ? v : `翌${String(h-24).padStart(2,'0')}:${mm}`;
-      const sel = value === v ? 'selected' : '';
-      opts += `<option value="${v}" ${sel}>${label}</option>`;
-    }
+    const label = h < 24 ? `${h}時` : `翌${h - 24}時`;
+    const sel = curH === h ? 'selected' : '';
+    hOpts += `<option value="${h}" ${sel}>${label}</option>`;
   }
-  return `<select id="${id}" class="time-select" style="flex:1;min-width:0;${style}">${opts}</select>`;
+
+  // 分セレクト（00〜59分）
+  let mOpts = `<option value="">--</option>`;
+  for (let m = 0; m < 60; m++) {
+    const mm = String(m).padStart(2, '0');
+    const sel = curM === m ? 'selected' : '';
+    mOpts += `<option value="${mm}" ${sel}>${mm}分</option>`;
+  }
+
+  return `
+    <select id="${id}-h" class="time-select" style="flex:1;min-width:0;${style}">${hOpts}</select>
+    <span style="font-size:13px;color:#718096">:</span>
+    <select id="${id}-m" class="time-select" style="flex:1;min-width:0;${style}">${mOpts}</select>
+  `;
+}
+
+// 時・分セレクトから "HH:MM" を取得
+function getTimeSelectValue(id) {
+  const h = document.getElementById(`${id}-h`)?.value;
+  const m = document.getElementById(`${id}-m`)?.value;
+  if (h === '' || h == null || m === '' || m == null) return '';
+  return `${String(h).padStart(2,'0')}:${m}`;
 }
 
 // ---- 打刻の編集 ----
@@ -1556,10 +1573,10 @@ function cancelEditPunch() {
 
 function saveEditPunch(date) {
   const newDate    = document.getElementById(`edit-date-${date}`).value;
-  const newIn      = document.getElementById(`edit-in-${date}`).value;
-  const newOut     = document.getElementById(`edit-out-${date}`).value;
-  const newBreakIn = document.getElementById(`edit-break-in-${date}`).value;
-  const newBreakOut= document.getElementById(`edit-break-out-${date}`).value;
+  const newIn      = getTimeSelectValue(`edit-in-${date}`);
+  const newOut     = getTimeSelectValue(`edit-out-${date}`);
+  const newBreakIn = getTimeSelectValue(`edit-break-in-${date}`);
+  const newBreakOut= getTimeSelectValue(`edit-break-out-${date}`);
   if (!newDate) { showToast('日付を入力してください'); return; }
   if (!newIn) { showToast('出勤時刻を入力してください'); return; }
   if (newOut) {
