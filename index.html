@@ -1822,6 +1822,7 @@ function renderShiftList() {
         <td>
           <div style="display:flex;gap:4px">
             <button class="btn-sm btn-save" onclick="saveEditShift(${s.id})">保存</button>
+            <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
             <button class="btn-sm btn-cancel" onclick="cancelEditShift()">×</button>
           </div>
         </td>
@@ -1833,10 +1834,7 @@ function renderShiftList() {
         <td>${s.end}</td>
         <td>${s.break}分</td>
         <td>
-          <div style="display:flex;gap:4px">
-            <button class="btn-sm btn-edit" onclick="startEditShift(${s.id})">編集</button>
-            <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
-          </div>
+          <button class="btn-sm btn-edit" onclick="startEditShift(${s.id})">編集</button>
         </td>
       </tr>`;
     }
