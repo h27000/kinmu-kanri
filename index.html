@@ -1635,7 +1635,7 @@ function renderPunchRecords() {
     const wage = calcWage(mins, ym);
 
     if (editingDate === p.date) {
-      const colSpan = hasWage ? 6 : 5;
+      const colSpan = hasWage ? 7 : 6;
       html += `<tr class="edit-row">
         <td colspan="${colSpan}" style="padding:10px 8px">
           <div style="display:flex;flex-direction:column;gap:10px">
