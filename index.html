@@ -1249,7 +1249,7 @@ function renderTargetBar(actualMins) {
   const targetMins = target * 60;
   const pct = Math.round(actualMins / targetMins * 100);
   const barW = Math.min(100, pct);
-  const color = pct >= 100 ? '#AA0000' : pct >= 70 ? '#e53e3e' : '#a0aec0';
+  const color = pct >= 100 ? '#AA0000' : '#a0aec0';
   area.innerHTML = `<div class="target-bar-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <span style="font-size:12px;font-weight:600;color:#4a5568">🎯 月間目標 ${target}h</span>
