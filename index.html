@@ -1806,24 +1806,20 @@ function renderShiftList() {
     const sh = parseInt(s.start);
     const eh = parseInt(s.end);
     if (editingShiftId === s.id) {
+      let startOpts = '', endOpts = '';
+      for (let h = 9; h <= 18; h++) startOpts += `<option value="${h}" ${sh===h?'selected':''}>${h}:00</option>`;
+      for (let h = 12; h <= 21; h++) endOpts   += `<option value="${h}" ${eh===h?'selected':''}>${h}:00</option>`;
       html += `<tr class="edit-row">
-        <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
-        <td colspan="3">
-          <div style="display:flex;gap:6px;align-items:center">
-            <select id="es-start-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 4px">`;
-      for (let h = 9; h <= 18; h++) html += `<option value="${h}" ${sh===h?'selected':''}>${h}:00</option>`;
-      html += `</select>
-            <span style="color:#718096">〜</span>
-            <select id="es-end-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 4px">`;
-      for (let h = 12; h <= 21; h++) html += `<option value="${h}" ${eh===h?'selected':''}>${h}:00</option>`;
-      html += `</select>
+        <td colspan="5" style="padding:10px 8px">
+          <div style="font-size:12px;color:#718096;margin-bottom:6px">${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <select id="es-start-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 6px">${startOpts}</select>
+            <span style="color:#718096;flex-shrink:0">〜</span>
+            <select id="es-end-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 6px">${endOpts}</select>
           </div>
-        </td>
-        <td>
-          <div style="display:flex;gap:4px">
-            <button class="btn-sm btn-save" onclick="saveEditShift(${s.id})">保存</button>
-            <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
-            <button class="btn-sm btn-cancel" onclick="cancelEditShift()">×</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm btn-save" style="flex:1;padding:10px;font-size:14px" onclick="saveEditShift(${s.id})">保存</button>
+            <button class="btn-sm btn-danger" style="flex:1;padding:10px;font-size:14px" onclick="deleteShift(${s.id})">削除</button>
           </div>
         </td>
       </tr>`;
