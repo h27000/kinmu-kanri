@@ -1760,6 +1760,37 @@ function deleteShift(id) {
   showToast('削除しました');
 }
 
+let editingShiftId = null;
+
+function startEditShift(id) {
+  editingShiftId = id;
+  renderShiftList();
+}
+
+function cancelEditShift() {
+  editingShiftId = null;
+  renderShiftList();
+}
+
+function saveEditShift(id) {
+  const startH = parseInt(document.getElementById(`es-start-${id}`).value);
+  const endH   = parseInt(document.getElementById(`es-end-${id}`).value);
+  if (isNaN(startH) || isNaN(endH)) { showToast('時間を正しく入力してください'); return; }
+  if (endH <= startH) { showToast('終了は開始より後にしてください'); return; }
+  const totalMins = (endH - startH) * 60;
+  const brk  = totalMins >= 420 ? 60 : 0;
+  const work = totalMins - brk;
+  const shifts = DB.shifts.map(s => s.id === id
+    ? { ...s, start: `${pad(startH)}:00`, end: `${pad(endH)}:00`, break: brk, work }
+    : s);
+  DB.shifts = shifts;
+  SYNC.push();
+  autoCalcWeeklyDays();
+  editingShiftId = null;
+  renderShiftList();
+  showToast('シフトを更新しました');
+}
+
 function renderShiftList() {
   const container = document.getElementById('shift-list-container');
   const ym = document.getElementById('shift-month')?.value || '';
@@ -1771,13 +1802,43 @@ function renderShiftList() {
   for (const s of shifts) {
     const [y, m, d] = s.date.split('-');
     const dow = DOWS[new Date(s.date).getDay()];
-    html += `<tr>
-      <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
-      <td>${s.start}</td>
-      <td>${s.end}</td>
-      <td>${s.break}分</td>
-      <td><button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button></td>
-    </tr>`;
+    const sh = parseInt(s.start);
+    const eh = parseInt(s.end);
+    if (editingShiftId === s.id) {
+      html += `<tr class="edit-row">
+        <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
+        <td colspan="3">
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="es-start-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 4px">`;
+      for (let h = 9; h <= 18; h++) html += `<option value="${h}" ${sh===h?'selected':''}>${h}:00</option>`;
+      html += `</select>
+            <span style="color:#718096">〜</span>
+            <select id="es-end-${s.id}" class="time-select" style="flex:1;font-size:15px;padding:8px 4px">`;
+      for (let h = 12; h <= 21; h++) html += `<option value="${h}" ${eh===h?'selected':''}>${h}:00</option>`;
+      html += `</select>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn-sm btn-save" onclick="saveEditShift(${s.id})">保存</button>
+            <button class="btn-sm btn-cancel" onclick="cancelEditShift()">×</button>
+          </div>
+        </td>
+      </tr>`;
+    } else {
+      html += `<tr>
+        <td>${parseInt(m)}/${parseInt(d)}${dowSpan(dow)}</td>
+        <td>${s.start}</td>
+        <td>${s.end}</td>
+        <td>${s.break}分</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn-sm btn-edit" onclick="startEditShift(${s.id})">編集</button>
+            <button class="btn-sm btn-danger" onclick="deleteShift(${s.id})">削除</button>
+          </div>
+        </td>
+      </tr>`;
+    }
   }
   html += '</tbody></table>';
   container.innerHTML = html;
