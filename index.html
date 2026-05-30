@@ -692,6 +692,7 @@
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
       </div>
       <div id="weekly-days-display" style="font-size:13px;font-weight:600;color:#4a5568"></div>
+      <div id="weekly-hours-display" style="font-size:13px;color:#4a5568;margin-top:4px"></div>
       <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
     </div>
   </div>
@@ -2000,6 +2001,19 @@ function autoCalcWeeklyDays() {
     <span style="color:#4a5568;font-weight:600">週所定労働日数：${days}日（自動）</span>
     <div style="display:flex;flex-wrap:wrap;gap:6px">${badges}</div>
   </div>`;
+
+  const hoursEl = document.getElementById('weekly-hours-display');
+  if (hoursEl) {
+    const allPunches = DB.punches.filter(p => p.in && p.out);
+    let totalMins = 0;
+    for (const p of allPunches) totalMins += calcPunchMinutes(p);
+    if (weekCount > 0 && totalMins > 0) {
+      const avgMins = Math.round(totalMins / weekCount);
+      hoursEl.textContent = `週平均実働：${minutesToHMFull(avgMins)}`;
+    } else {
+      hoursEl.textContent = '';
+    }
+  }
 }
 
 function addLeave() {
