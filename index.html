@@ -845,6 +845,7 @@
         </div>
         <div class="wage-display" id="wage-display"></div>
         <div style="font-size:12px;color:#1a202c;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
+        <button onclick="resetFutureRates()" style="margin-top:10px;padding:8px 14px;background:#fff5f5;border:1px solid #fc8181;color:#c53030;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">今月以降の月別設定を削除して基本時給を適用</button>
       </div>
 
       <!-- 交通費 -->
@@ -1217,6 +1218,19 @@ function deleteMonthlyRate(month) {
   renderMonthlyRatesList();
   renderPunchRecords();
   showToast(`${month} の月別設定を削除しました`);
+}
+
+function resetFutureRates() {
+  const now = new Date();
+  const thisYM = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  const rates = DB.hourlyRates;
+  Object.keys(rates).forEach(ym => { if (ym >= thisYM) delete rates[ym]; });
+  DB.hourlyRates = rates;
+  SYNC.push();
+  renderMonthlyRatesList();
+  renderSummary();
+  renderAnnual();
+  showToast(`今月以降の月別設定を削除しました（基本時給が適用されます）`);
 }
 
 // ---- 交通費設定 ----
