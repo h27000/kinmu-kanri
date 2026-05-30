@@ -1247,14 +1247,15 @@ function renderTargetBar(actualMins) {
   const target = DB.targetHours;
   if (!target) { area.innerHTML = ''; return; }
   const targetMins = target * 60;
-  const pct = Math.min(100, Math.round(actualMins / targetMins * 100));
+  const pct = Math.round(actualMins / targetMins * 100);
+  const barW = Math.min(100, pct);
   const color = pct >= 100 ? '#276749' : pct >= 70 ? '#AA0000' : '#c05621';
   area.innerHTML = `<div class="target-bar-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <span style="font-size:12px;font-weight:600;color:#4a5568">🎯 月間目標 ${target}h</span>
       <span style="font-size:12px;font-weight:700;color:${color}">${pct}%　${minutesToHM(actualMins)} / ${target}h</span>
     </div>
-    <div class="target-bar-track"><div class="target-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <div class="target-bar-track"><div class="target-bar-fill" style="width:${barW}%;background:${color}"></div></div>
   </div>`;
 }
 
