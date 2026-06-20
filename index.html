@@ -1456,6 +1456,7 @@ function restoreAutoBackup(key) {
   renderShiftList();
   renderSummary();
   renderAnnual();
+  renderLeave();
   showToast('自動バックアップから復元しました');
   document.getElementById('backup-status').textContent = `✅ ${key.replace(AUTO_BACKUP_PREFIX,'')} のバックアップから復元しました`;
 }
@@ -1511,6 +1512,9 @@ function importBackup(event) {
       renderMonthlyRatesList();
       refreshPunchUI();
       renderShiftList();
+      renderSummary();
+      renderAnnual();
+      renderLeave();
       SYNC.push();
       document.getElementById('backup-status').textContent = '✅ データを復元しました';
       showToast('データを復元しました');
@@ -2039,6 +2043,23 @@ function autoCalcWeeklyDays() {
   }
 
   DB.weeklyDays = days;
+
+  // weekly-hours-display は el の有無に関わらず更新
+  const hoursElEarly = document.getElementById('weekly-hours-display');
+  if (hoursElEarly) {
+    const allPunchesE = DB.punches.filter(p => p.in && p.out);
+    let totalMinsE = 0;
+    for (const p of allPunchesE) totalMinsE += calcPunchMinutes(p);
+    if (allPunchesE.length > 0 && totalMinsE > 0) {
+      const pDatesE = allPunchesE.map(p => p.date).sort();
+      const getMonE = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
+      const pWC = Math.round((getMonE(new Date(pDatesE[pDatesE.length-1])) - getMonE(new Date(pDatesE[0]))) / (7*86400000)) + 1;
+      hoursElEarly.textContent = `週平均実働：${minutesToHMFull(Math.round(totalMinsE / pWC))}`;
+    } else {
+      hoursElEarly.textContent = '';
+    }
+  }
+
   const el = document.getElementById('weekly-days-display');
   if (!el) return;
 
@@ -2067,29 +2088,6 @@ function autoCalcWeeklyDays() {
     <div style="display:flex;flex-wrap:wrap;gap:6px">${badges}</div>
   </div>`;
 
-  const hoursEl = document.getElementById('weekly-hours-display');
-  if (hoursEl) {
-    const allPunches = DB.punches.filter(p => p.in && p.out);
-    let totalMins = 0;
-    for (const p of allPunches) totalMins += calcPunchMinutes(p);
-    if (allPunches.length > 0 && totalMins > 0) {
-      const pDates = allPunches.map(p => p.date).sort();
-      const getMon = d => {
-        const day = d.getDay();
-        const mon = new Date(d);
-        mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-        mon.setHours(0,0,0,0);
-        return mon;
-      };
-      const fMon = getMon(new Date(pDates[0]));
-      const lMon = getMon(new Date(pDates[pDates.length - 1]));
-      const pWeekCount = Math.round((lMon - fMon) / (7 * 86400000)) + 1;
-      const avgMins = Math.round(totalMins / pWeekCount);
-      hoursEl.textContent = `週平均実働：${minutesToHMFull(avgMins)}`;
-    } else {
-      hoursEl.textContent = '';
-    }
-  }
 }
 
 function addLeave() {
