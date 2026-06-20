@@ -2071,8 +2071,19 @@ function autoCalcWeeklyDays() {
     const allPunches = DB.punches.filter(p => p.in && p.out);
     let totalMins = 0;
     for (const p of allPunches) totalMins += calcPunchMinutes(p);
-    if (weekCount > 0 && totalMins > 0) {
-      const avgMins = Math.round(totalMins / weekCount);
+    if (allPunches.length > 0 && totalMins > 0) {
+      const pDates = allPunches.map(p => p.date).sort();
+      const getMon = d => {
+        const day = d.getDay();
+        const mon = new Date(d);
+        mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+        mon.setHours(0,0,0,0);
+        return mon;
+      };
+      const fMon = getMon(new Date(pDates[0]));
+      const lMon = getMon(new Date(pDates[pDates.length - 1]));
+      const pWeekCount = Math.round((lMon - fMon) / (7 * 86400000)) + 1;
+      const avgMins = Math.round(totalMins / pWeekCount);
       hoursEl.textContent = `週平均実働：${minutesToHMFull(avgMins)}`;
     } else {
       hoursEl.textContent = '';
