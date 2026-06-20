@@ -1389,6 +1389,7 @@ async function syncNow() {
     renderShiftList();
     renderSummary();
     renderAnnual();
+    renderLeave();
     showToast('同期完了しました');
   } else {
     if (status) status.innerHTML = '❌ 同期失敗<br><span style="font-size:11px">APIキーかネット接続を確認してください</span>';
