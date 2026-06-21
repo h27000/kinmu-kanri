@@ -2051,15 +2051,15 @@ function calcSimulator() {
   };
   const pDates = allPunches.map(p => p.date).sort();
   const firstMon   = getMon(new Date(pDates[0]));
-  const lastMon    = getMon(new Date(pDates[pDates.length - 1]));
   const targetMon  = getMon(new Date(targetDate));
+  const todayMon   = getMon(new Date());
 
-  const currentWeeks  = Math.round((lastMon  - firstMon) / (7 * 86400000)) + 1;
-  const totalWeeks    = Math.round((targetMon - firstMon) / (7 * 86400000)) + 1;
-  const remainWeeks   = totalWeeks - currentWeeks;
+  const totalWeeks   = Math.round((targetMon - firstMon) / (7 * 86400000)) + 1;
+  const passedWeeks  = Math.round((todayMon  - firstMon) / (7 * 86400000)) + 1;
+  const remainWeeks  = totalWeeks - passedWeeks;
 
   if (remainWeeks <= 0) {
-    const avg = totalMins / currentWeeks;
+    const avg = totalMins / passedWeeks;
     const ok = avg >= targetH * 60;
     result.innerHTML = ok
       ? `<span style="color:#276749">✅ すでに達成！週平均 ${minutesToHMFull(Math.round(avg))}</span>`
