@@ -672,7 +672,7 @@
 
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
-      <select id="shift-month" onchange="renderShiftList()"></select>
+      <select id="shift-month" onchange="onShiftMonthChange()"></select>
     </div>
     <div id="shift-list-container">
       <p class="empty-msg">シフトがありません</p>
@@ -1816,6 +1816,22 @@ function autoFillBreak() {
   if (isNaN(sh) || isNaN(eh)) return;
   const diff = eh - sh;
   document.getElementById('shift-break').value = diff >= 7 ? 60 : 0;
+}
+
+function onShiftMonthChange() {
+  renderShiftList();
+  const ym = document.getElementById('shift-month')?.value;
+  if (!ym) return;
+  const dateEl = document.getElementById('shift-date');
+  if (!dateEl) return;
+  const [y, m] = ym.split('-').map(Number);
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === y && today.getMonth() + 1 === m;
+  if (isCurrentMonth) {
+    dateEl.value = `${y}-${pad(m)}-${pad(today.getDate())}`;
+  } else {
+    dateEl.value = `${y}-${pad(m)}-01`;
+  }
 }
 
 function addShift() {
