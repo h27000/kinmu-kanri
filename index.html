@@ -701,6 +701,26 @@
     </div>
   </div>
 
+  <!-- 週平均目標計算 -->
+  <div class="card">
+    <h3>🧮 週平均達成シミュレーター</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
+        <input type="number" id="sim-target-hours" min="1" max="60" step="1" value="30"
+          style="width:64px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+          oninput="calcSimulator()">
+        <span style="font-size:13px;color:#718096">h/週</span>
+        <span style="font-size:13px;color:#4a5568;white-space:nowrap">を</span>
+        <input type="date" id="sim-target-date"
+          style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+          oninput="calcSimulator()">
+        <span style="font-size:13px;color:#718096">までに達成</span>
+      </div>
+      <div id="sim-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
+    </div>
+  </div>
+
   <!-- サマリー -->
   <div class="leave-summary" id="leave-summary-card">
     <h3>📊 消化状況</h3>
@@ -2009,6 +2029,55 @@ function calcTotalGranted(hireDate) {
   return grants.slice(-2).reduce((sum, g) => sum + g.days, 0);
 }
 
+function calcSimulator() {
+  const result = document.getElementById('sim-result');
+  if (!result) return;
+  const targetH = parseInt(document.getElementById('sim-target-hours').value) || 30;
+  const targetDate = document.getElementById('sim-target-date').value;
+  if (!targetDate) { result.textContent = ''; return; }
+
+  const allPunches = DB.punches.filter(p => p.in && p.out);
+  if (allPunches.length === 0) { result.textContent = '打刻データがありません'; return; }
+
+  let totalMins = 0;
+  for (const p of allPunches) totalMins += calcPunchMinutes(p);
+
+  const getMon = d => {
+    const day = d.getDay();
+    const mon = new Date(d);
+    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    mon.setHours(0,0,0,0);
+    return mon;
+  };
+  const pDates = allPunches.map(p => p.date).sort();
+  const firstMon   = getMon(new Date(pDates[0]));
+  const lastMon    = getMon(new Date(pDates[pDates.length - 1]));
+  const targetMon  = getMon(new Date(targetDate));
+
+  const currentWeeks  = Math.round((lastMon  - firstMon) / (7 * 86400000)) + 1;
+  const totalWeeks    = Math.round((targetMon - firstMon) / (7 * 86400000)) + 1;
+  const remainWeeks   = totalWeeks - currentWeeks;
+
+  if (remainWeeks <= 0) {
+    const avg = totalMins / currentWeeks;
+    const ok = avg >= targetH * 60;
+    result.innerHTML = ok
+      ? `<span style="color:#276749">✅ すでに達成！週平均 ${minutesToHMFull(Math.round(avg))}</span>`
+      : `<span style="color:#c53030">❌ 期限切れ（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`;
+    return;
+  }
+
+  const needMins    = targetH * 60 * totalWeeks - totalMins;
+  const perWeekMins = Math.ceil(needMins / remainWeeks);
+
+  if (perWeekMins <= 0) {
+    result.innerHTML = `<span style="color:#276749">✅ このままで達成できます！</span>`;
+  } else {
+    const color = perWeekMins > targetH * 60 ? '#c53030' : '#AA0000';
+    result.innerHTML = `残り<strong>${remainWeeks}週</strong>、週<strong style="color:${color}">${minutesToHMFull(perWeekMins)}</strong>働けば達成できます`;
+  }
+}
+
 function saveHireDate() {
   const val = document.getElementById('hire-date').value;
   if (!val) { showToast('入社日を入力してください'); return; }
@@ -2117,6 +2186,13 @@ function renderLeave() {
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
   autoCalcWeeklyDays();
+  // シミュレーターの日付初期値（未設定時のみ）
+  const simDate = document.getElementById('sim-target-date');
+  if (simDate && !simDate.value) {
+    const now = new Date();
+    simDate.value = `${now.getFullYear()}-${pad(now.getMonth()+2)}-${pad(new Date(now.getFullYear(), now.getMonth()+2, 0).getDate())}`;
+  }
+  calcSimulator();
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
