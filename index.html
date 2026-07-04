@@ -2052,7 +2052,10 @@ function calcSimulator() {
   const targetDate = document.getElementById('sim-target-date').value;
   if (!targetDate) { result.textContent = ''; return; }
 
-  const allPunches = DB.punches.filter(p => p.in && p.out);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  // 未来日の打刻（予定入力分）は除外し、今日までの実績のみで計算する
+  const allPunches = DB.punches.filter(p => p.in && p.out && p.date <= todayStr);
   if (allPunches.length === 0) { result.textContent = '打刻データがありません'; return; }
 
   let totalMins = 0;
