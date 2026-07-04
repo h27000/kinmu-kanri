@@ -716,6 +716,7 @@
           style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
           oninput="calcSimulator()">
         <span style="font-size:13px;color:#718096">までキープするには</span>
+        <button class="btn-primary" onclick="saveSimSettings()" style="white-space:nowrap;padding:9px 14px">保存</button>
       </div>
       <div id="sim-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
     </div>
@@ -2045,6 +2046,15 @@ function calcTotalGranted(hireDate) {
   return grants.slice(-2).reduce((sum, g) => sum + g.days, 0);
 }
 
+function saveSimSettings() {
+  const h = document.getElementById('sim-target-hours')?.value;
+  const d = document.getElementById('sim-target-date')?.value;
+  if (!d) { showToast('日付を入力してください'); return; }
+  localStorage.setItem('wt_sim_hours', h || '30');
+  localStorage.setItem('wt_sim_date', d);
+  showToast('シミュレーター設定を保存しました');
+}
+
 function calcSimulator() {
   const result = document.getElementById('sim-result');
   if (!result) return;
@@ -2219,11 +2229,20 @@ function renderLeave() {
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
   autoCalcWeeklyDays();
-  // シミュレーターの日付初期値（未設定時のみ）
-  const simDate = document.getElementById('sim-target-date');
-  if (simDate && !simDate.value) {
-    const now = new Date();
-    simDate.value = `${now.getFullYear()}-${pad(now.getMonth()+2)}-${pad(new Date(now.getFullYear(), now.getMonth()+2, 0).getDate())}`;
+  // シミュレーターの初期値：保存済み設定 > 入力中の値 > 来月末（初回のみ復元）
+  const simDate  = document.getElementById('sim-target-date');
+  const simHours = document.getElementById('sim-target-hours');
+  if (simDate && !simDate.dataset.restored) {
+    simDate.dataset.restored = '1';
+    const savedH = localStorage.getItem('wt_sim_hours');
+    const savedD = localStorage.getItem('wt_sim_date');
+    if (savedH && simHours) simHours.value = savedH;
+    if (savedD) {
+      simDate.value = savedD;
+    } else if (!simDate.value) {
+      const now = new Date();
+      simDate.value = `${now.getFullYear()}-${pad(now.getMonth()+2)}-${pad(new Date(now.getFullYear(), now.getMonth()+2, 0).getDate())}`;
+    }
   }
   calcSimulator();
 
