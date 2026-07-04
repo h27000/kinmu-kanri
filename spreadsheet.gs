@@ -1,6 +1,8 @@
 // 勤務時間管理 - Google Apps Script
+// SS_ID はスクリプトプロパティに設定すること:
+//   GASエディタ → プロジェクトの設定 → スクリプトプロパティ → SS_ID = <スプレッドシートID>
 
-const SS_ID = '1VLybd7B02tQZfOEw2BO4iIiAAkQLx2l6j4ff2i0PMKI';
+const SS_ID = PropertiesService.getScriptProperties().getProperty('SS_ID');
 
 const S = {
   SETTINGS: '設定',
