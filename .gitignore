@@ -1,0 +1,15 @@
+# 環境変数・秘密情報
+.env
+.env.*
+*secret*
+*token*
+
+# macOS
+.DS_Store
+
+# エディタ
+.vscode/
+*.swp
+
+# ローカルバックアップ
+*.bak
