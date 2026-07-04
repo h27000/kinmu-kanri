@@ -703,7 +703,7 @@
 
   <!-- 週平均目標計算 -->
   <div class="card">
-    <h3>🧮 週平均達成シミュレーター</h3>
+    <h3>🧮 週平均キープシミュレーター</h3>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
@@ -715,7 +715,7 @@
         <input type="date" id="sim-target-date"
           style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
           oninput="calcSimulator()">
-        <span style="font-size:13px;color:#718096">までに達成</span>
+        <span style="font-size:13px;color:#718096">までキープするには</span>
       </div>
       <div id="sim-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
     </div>
@@ -2078,8 +2078,8 @@ function calcSimulator() {
     const avg = totalMins / passedWeeks;
     const ok = avg >= targetH * 60;
     result.innerHTML = ok
-      ? `<span style="color:#276749">✅ すでに達成！週平均 ${minutesToHMFull(Math.round(avg))}</span>`
-      : `<span style="color:#c53030">❌ 期限切れ（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`;
+      ? `<span style="color:#276749">✅ キープ完了！週平均 ${minutesToHMFull(Math.round(avg))}</span>`
+      : `<span style="color:#c53030">❌ 期間終了（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`;
     return;
   }
 
@@ -2087,10 +2087,10 @@ function calcSimulator() {
   const perWeekMins = Math.ceil(needMins / remainWeeks);
 
   if (perWeekMins <= 0) {
-    result.innerHTML = `<span style="color:#276749">✅ このままで達成できます！</span>`;
+    result.innerHTML = `<span style="color:#276749">✅ このままのペースでキープできます！</span>`;
   } else {
     const color = perWeekMins > targetH * 60 ? '#c53030' : '#AA0000';
-    result.innerHTML = `残り<strong>${remainWeeks}週</strong>、週<strong style="color:${color}">${minutesToHMFull(perWeekMins)}</strong>働けば達成できます`;
+    result.innerHTML = `残り<strong>${remainWeeks}週</strong>、週<strong style="color:${color}">${minutesToHMFull(perWeekMins)}</strong>のペースを維持すればOKです`;
   }
 }
 
