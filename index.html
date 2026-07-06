@@ -2079,15 +2079,15 @@ function calcSimulator() {
   const actual  = entered.filter(p => p.date <= todayStr);
   if (entered.length === 0) { result.textContent = '打刻データがありません'; return; }
 
-  // coveredMon = データでカバー済みの最後の週の月曜。それ以降が「残り週」になる
-  const buildLine = (punches, coveredMon) => {
+  // availableFromMon = まだ働ける最初の週の月曜。その週以降が「残り週」になる
+  const buildLine = (punches, availableFromMon) => {
     if (punches.length === 0) return '打刻データがありません';
     let totalMins = 0;
     for (const p of punches) totalMins += calcPunchMinutes(p);
     const pDates = punches.map(p => p.date).sort();
     const firstMon = getMon(new Date(pDates[0]));
-    const totalWeeks   = Math.round((targetMon  - firstMon) / (7 * 86400000)) + 1;
-    const coveredWeeks = Math.round((coveredMon - firstMon) / (7 * 86400000)) + 1;
+    const totalWeeks   = Math.round((targetMon - firstMon) / (7 * 86400000)) + 1;
+    const coveredWeeks = Math.round((availableFromMon - firstMon) / (7 * 86400000));
     const remainWeeks  = totalWeeks - coveredWeeks;
     if (remainWeeks <= 0) {
       const avg = totalMins / coveredWeeks;
@@ -2112,9 +2112,11 @@ function calcSimulator() {
   }
   const lastMon = getMon(new Date(entered.map(p => p.date).sort()[entered.length - 1]));
   const enteredMon = lastMon > todayMon ? lastMon : todayMon;
+  // 予定を含む場合、入力済みの最終週まではカバー済みなので、その翌週から「残り週」
+  const afterEnteredMon = new Date(enteredMon.getTime() + 7 * 86400000);
   result.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
     <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📌 今日までの実績のみ</span>${buildLine(actual, todayMon)}</div>
-    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📝 入力済みの予定を含む</span>${buildLine(entered, enteredMon)}</div>
+    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📝 入力済みの予定を含む</span>${buildLine(entered, afterEnteredMon)}</div>
   </div>`;
 }
 
