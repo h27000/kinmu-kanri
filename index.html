@@ -733,21 +733,10 @@
     <h3>週平均キープシミュレーター</h3>
     <div style="display:flex;flex-direction:column;gap:12px">
 
-      <!-- ① 全期間 -->
+      <!-- ① 2/1〜7/31（確定・目標週30時間） -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
         <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
-          <input type="number" id="sim-target-hours" min="1" max="60" step="1" value="30"
-            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
-            oninput="calcSimulator()">
-          <span style="font-size:13px;color:#718096">h/週 を</span>
-          <input type="date" id="sim-target-date"
-            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
-            oninput="calcSimulator()">
-          <span style="font-size:13px;color:#718096">までキープ</span>
-          <button class="btn-primary" onclick="saveSimSettings()" style="white-space:nowrap;padding:8px 14px">保存</button>
-        </div>
+        <div style="font-size:13px;color:#4a5568">目標 週30時間をキープ</div>
         <div id="sim-result" style="font-size:14px;color:#4a5568"></div>
       </div>
 
@@ -2141,15 +2130,6 @@ function calcTotalGranted(hireDate) {
   return grants.slice(-2).reduce((sum, g) => sum + g.days, 0);
 }
 
-function saveSimSettings() {
-  const h = document.getElementById('sim-target-hours')?.value;
-  const d = document.getElementById('sim-target-date')?.value;
-  if (!d) { showToast('日付を入力してください'); return; }
-  localStorage.setItem('wt_sim_hours', h || '30');
-  localStorage.setItem('wt_sim_date', d);
-  showToast('シミュレーター設定を保存しました');
-}
-
 function saveSim2Settings() {
   const h = document.getElementById('sim2-target-hours')?.value;
   const d = document.getElementById('sim2-target-date')?.value;
@@ -2161,7 +2141,7 @@ function saveSim2Settings() {
 
 // 2つのシミュレーターをまとめて再計算する
 function calcSimulator() {
-  runSim({ hoursId: 'sim-target-hours',  dateId: 'sim-target-date',  resultId: 'sim-result',  defaultH: 30, startDate: '2026-02-01' });
+  runSim({ resultId: 'sim-result', fixedH: 30, fixedDate: '2026-07-31', startDate: '2026-02-01' });
   runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01', showAvg: true });
 }
 
@@ -2169,11 +2149,18 @@ function calcSimulator() {
 function runSim(opts) {
   const result = document.getElementById(opts.resultId);
   if (!result) return;
-  const hoursEl = document.getElementById(opts.hoursId);
-  const dateEl  = document.getElementById(opts.dateId);
-  if (!hoursEl || !dateEl) return;
-  const targetH = parseInt(hoursEl.value) || opts.defaultH;
-  const targetDate = dateEl.value;
+  let targetH, targetDate;
+  if (opts.fixedH != null) {
+    // 確定期間（入力欄なし）：目標時間・目標日を固定値で計算
+    targetH = opts.fixedH;
+    targetDate = opts.fixedDate;
+  } else {
+    const hoursEl = document.getElementById(opts.hoursId);
+    const dateEl  = document.getElementById(opts.dateId);
+    if (!hoursEl || !dateEl) return;
+    targetH = parseInt(hoursEl.value) || opts.defaultH;
+    targetDate = dateEl.value;
+  }
   if (!targetDate) { result.textContent = ''; return; }
 
   const now = new Date();
@@ -2415,21 +2402,6 @@ function renderLeave() {
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
   autoCalcWeeklyDays();
-  // シミュレーターの初期値：保存済み設定 > 入力中の値 > 来月末（初回のみ復元）
-  const simDate  = document.getElementById('sim-target-date');
-  const simHours = document.getElementById('sim-target-hours');
-  if (simDate && !simDate.dataset.restored) {
-    simDate.dataset.restored = '1';
-    const savedH = localStorage.getItem('wt_sim_hours');
-    const savedD = localStorage.getItem('wt_sim_date');
-    if (savedH && simHours) simHours.value = savedH;
-    if (savedD) {
-      simDate.value = savedD;
-    } else if (!simDate.value) {
-      const now = new Date();
-      simDate.value = `${now.getFullYear()}-${pad(now.getMonth()+2)}-${pad(new Date(now.getFullYear(), now.getMonth()+2, 0).getDate())}`;
-    }
-  }
   // シミュレーター②（8/1以降）の初期値
   const sim2Date  = document.getElementById('sim2-target-date');
   const sim2Hours = document.getElementById('sim2-target-hours');
