@@ -2241,19 +2241,26 @@ function saveHireDate() {
 function autoCalcWeeklyDays() {
   const shifts  = DB.shifts;
   const punches = DB.punches.filter(p => p.in && p.out);
-  const dates   = [...new Set(
-    (shifts.length ? shifts.map(s => s.date) : punches.map(p => p.date))
-  )].sort();
+  const source  = shifts.length ? shifts.map(s => s.date) : punches.map(p => p.date);
+  const dates   = [...new Set(source)].sort();
+
+  const getMonday = d => {
+    const day = d.getDay();
+    const mon = new Date(d);
+    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    mon.setHours(0,0,0,0);
+    return mon;
+  };
+  // 指定範囲の週所定労働日数（1〜5日にクランプ）。データなしは null
+  const weekDaysRange = (lower, upper) => {
+    const ds = [...new Set(source.filter(d => (!lower || d >= lower) && (!upper || d <= upper)))].sort();
+    if (!ds.length) return null;
+    const wc = Math.round((getMonday(new Date(ds[ds.length-1])) - getMonday(new Date(ds[0]))) / (7*86400000)) + 1;
+    return Math.min(5, Math.max(1, Math.round(ds.length / wc)));
+  };
 
   let days = 5, needed = 0, needed4 = 0, weekCount = 0;
   if (dates.length > 0) {
-    const getMonday = d => {
-      const day = d.getDay();
-      const mon = new Date(d);
-      mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-      mon.setHours(0,0,0,0);
-      return mon;
-    };
     const firstMon = getMonday(new Date(dates[0]));
     const lastMon  = getMonday(new Date(dates[dates.length - 1]));
     weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
@@ -2287,8 +2294,14 @@ function autoCalcWeeklyDays() {
     badges += `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まであと${needed4}日${suffix}</span>`;
   }
 
+  const d1 = weekDaysRange('2026-02-01', '2026-07-31');
+  const d2 = weekDaysRange('2026-08-01', null);
+  const line1 = d1 !== null ? `<span style="color:#4a5568;font-weight:600">① 2/1〜7/31　週所定労働日数 ${d1}日</span>` : '';
+  const line2 = d2 !== null ? `<span style="color:#4a5568;font-weight:600">② 8/1以降　週所定労働日数 ${d2}日</span>` : '';
+
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
-    <span style="color:#4a5568;font-weight:600">週所定労働日数：${days}日（自動）</span>
+    ${line1}
+    ${line2}
     <div style="display:flex;flex-wrap:wrap;gap:6px">${badges}</div>
   </div>`;
 
