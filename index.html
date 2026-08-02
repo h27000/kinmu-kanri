@@ -693,7 +693,7 @@
     <h3>有給設定</h3>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <label style="font-size:13px;font-weight:600;color:#4a5568;white-space:nowrap">入社日</label>
+        <label style="font-size:14px;font-weight:600;color:#4a5568;white-space:nowrap">入社日</label>
         <input type="date" id="hire-date"
           style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
@@ -703,25 +703,25 @@
         <!-- ① 2/1〜7/31 -->
         <div id="days-box1" style="display:none;flex-direction:column;gap:6px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
           <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
-          <div id="days1-summary" style="font-size:13px;color:#4a5568;font-weight:600"></div>
+          <div id="days1-summary" style="font-size:14px;color:#4a5568;font-weight:600"></div>
         </div>
         <!-- ② 8/1以降 -->
         <div id="days-box2" style="display:none;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
           <div style="font-size:12px;color:#718096">② 8/1以降</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
+            <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
             <input type="number" id="days-target" min="1" max="7" step="0.5" value="4"
-              style="width:56px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+              style="width:56px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff"
               oninput="calcDaysKeep()">
-            <span style="font-size:13px;color:#718096">日/週 を</span>
+            <span style="font-size:14px;color:#718096">日/週 を</span>
             <input type="date" id="days-target-date"
-              style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+              style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff"
               oninput="calcDaysKeep()">
-            <span style="font-size:13px;color:#718096">までキープ</span>
+            <span style="font-size:14px;color:#718096">までキープ</span>
             <button class="btn-primary" onclick="saveDaysKeep()" style="white-space:nowrap;padding:8px 14px">保存</button>
           </div>
-          <div id="days2-summary" style="font-size:13px;color:#4a5568"></div>
-          <div id="days-keep-result" style="font-size:13px;color:#4a5568"></div>
+          <div id="days2-summary" style="font-size:14px;color:#4a5568"></div>
+          <div id="days-keep-result" style="font-size:14px;color:#4a5568"></div>
           <div id="days2-badge" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
       </div>
@@ -736,7 +736,7 @@
       <!-- ① 2/1〜7/31（確定・目標週30時間） -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
         <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
-        <div style="font-size:13px;color:#4a5568">目標 週30時間をキープ</div>
+        <div style="font-size:14px;color:#4a5568">目標 週30時間をキープ</div>
         <div id="sim-result" style="font-size:14px;color:#4a5568"></div>
       </div>
 
@@ -744,15 +744,15 @@
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
         <div style="font-size:12px;color:#718096">② 8/1以降</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
+          <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim2-target-hours" min="1" max="60" step="1" value="20"
-            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
-          <span style="font-size:13px;color:#718096">h/週 を</span>
+          <span style="font-size:14px;color:#718096">h/週 を</span>
           <input type="date" id="sim2-target-date"
-            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
-          <span style="font-size:13px;color:#718096">までキープ</span>
+          <span style="font-size:14px;color:#718096">までキープ</span>
           <button class="btn-primary" onclick="saveSim2Settings()" style="white-space:nowrap;padding:8px 14px">保存</button>
         </div>
         <div id="sim2-result" style="font-size:14px;color:#4a5568"></div>
