@@ -2293,7 +2293,7 @@ function autoCalcWeeklyDays() {
     const need4 = Math.ceil(4 * wc2) - ds2.length;
     badge2 = need4 <= 0
       ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4まで +${Math.abs(need4)}日${suffix}</span>`
-      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まであと${need4}日${suffix}</span>`;
+      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まで +${need4}日${suffix}</span>`;
   }
 
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
