@@ -709,43 +709,43 @@
 
   <!-- 週平均キープシミュレーター（①全期間／②8/1以降を1カードに統合） -->
   <div class="card">
-    <h3>🧮 週平均キープシミュレーター</h3>
-    <div style="display:flex;flex-direction:column;gap:14px">
+    <h3>週平均キープシミュレーター</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">
 
       <!-- ① 全期間 -->
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:12px;font-weight:700;color:#718096">① 全期間</div>
+      <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:#718096">① 全期間</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim-target-hours" min="1" max="60" step="1" value="30"
-            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
           <span style="font-size:13px;color:#718096">h/週 を</span>
           <input type="date" id="sim-target-date"
-            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
           <span style="font-size:13px;color:#718096">までキープ</span>
           <button class="btn-primary" onclick="saveSimSettings()" style="white-space:nowrap;padding:8px 14px">保存</button>
         </div>
-        <div id="sim-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
+        <div id="sim-result" style="font-size:14px;color:#4a5568"></div>
       </div>
 
       <!-- ② 8/1以降 -->
-      <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #edf2f7;padding-top:14px">
-        <div style="font-size:12px;font-weight:700;color:#718096">② 8/1以降</div>
+      <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:#718096">② 8/1以降</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim2-target-hours" min="1" max="60" step="1" value="20"
-            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+            style="width:60px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
           <span style="font-size:13px;color:#718096">h/週 を</span>
           <input type="date" id="sim2-target-date"
-            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+            style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
             oninput="calcSimulator()">
           <span style="font-size:13px;color:#718096">までキープ</span>
           <button class="btn-primary" onclick="saveSim2Settings()" style="white-space:nowrap;padding:8px 14px">保存</button>
         </div>
-        <div id="sim2-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
+        <div id="sim2-result" style="font-size:14px;color:#4a5568"></div>
       </div>
 
     </div>
@@ -2193,16 +2193,16 @@ function runSim(opts) {
       const avg = totalMins / totalWeeks;
       const ok = avg >= targetH * 60;
       return ok
-        ? `<span style="color:#276749">✅ キープ完了！週平均 ${minutesToHMFull(Math.round(avg))}</span>`
-        : `<span style="color:#c53030">❌ 期間終了（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`;
+        ? `<span style="color:#276749">キープ完了（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`
+        : `<span style="color:#c53030">期間終了（週平均 ${minutesToHMFull(Math.round(avg))}）</span>`;
     }
     const needMins = targetH * 60 * totalWeeks - totalMins;
     if (needMins <= 0) {
-      return `<span style="color:#276749">✅ このままのペースでキープできます！</span>`;
+      return `<span style="color:#276749">このままのペースでキープできます</span>`;
     }
     const perWeekMins = Math.ceil(needMins / capacity);
     const color = perWeekMins > targetH * 60 ? '#c53030' : '#AA0000';
-    return `残り<strong>${Math.ceil(capacity)}週</strong>、週<strong style="color:${color}">${minutesToHMFull(perWeekMins)}</strong>のペースでOK`;
+    return `残り${Math.ceil(capacity)}週、週<span style="color:${color}">${minutesToHMFull(perWeekMins)}</span>のペースでOK`;
   };
 
   // 今週のうち明日以降に残っている日数（月曜なら6、日曜なら0）
@@ -2215,7 +2215,7 @@ function runSim(opts) {
     for (const p of actual) t += calcPunchMinutes(p);
     const aDates = actual.map(p => p.date).sort();
     const wc = Math.round((getMon(new Date(aDates[aDates.length - 1])) - getMon(new Date(aDates[0]))) / (7 * 86400000)) + 1;
-    avgLine = `<div style="font-size:13px;color:#4a5568;margin-bottom:6px">📊 週平均実働：<strong>${minutesToHMFull(Math.round(t / wc))}</strong></div>`;
+    avgLine = `<div style="font-size:13px;color:#4a5568;margin-bottom:6px">週平均実働：${minutesToHMFull(Math.round(t / wc))}</div>`;
   }
 
   const hasFuture = entered.length > actual.length;
@@ -2226,8 +2226,8 @@ function runSim(opts) {
   const lastMon = getMon(new Date(entered.map(p => p.date).sort()[entered.length - 1]));
   const enteredMon = lastMon > todayMon ? lastMon : todayMon;
   result.innerHTML = avgLine + `<div style="display:flex;flex-direction:column;gap:8px">
-    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📌 今日までの実績のみ</span>${buildLine(actual, todayMon, daysLeftThisWeek)}</div>
-    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📝 入力済みの予定を含む</span>${buildLine(entered, enteredMon, 0)}</div>
+    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">今日までの実績のみ</span>${buildLine(actual, todayMon, daysLeftThisWeek)}</div>
+    <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">入力済みの予定を含む</span>${buildLine(entered, enteredMon, 0)}</div>
   </div>`;
 }
 
