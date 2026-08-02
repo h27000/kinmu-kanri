@@ -629,6 +629,9 @@
     </div>
   </div>
 
+  <!-- 打刻ミス検出 -->
+  <div id="punch-alerts"></div>
+
   <!-- 打刻記録 -->
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
@@ -1570,6 +1573,7 @@ function refreshPunchUI() {
     const wage = calcWage(mins, punch.date.substring(0, 7));
     status.innerHTML = `出勤 <span>${punch.in}</span> → 退勤 <span>${punch.out}</span>　実働 <span>${minutesToHM(mins)}</span>${wage !== null ? `　給与 <span>${fmtWage(wage)}</span>` : ''}`;
   }
+  renderPunchAlerts();
   renderPunchRecords();
 }
 
@@ -1710,6 +1714,50 @@ function saveEditPunch(date) {
   editingDate = null;
   showToast('打刻を更新しました');
   refreshPunchUI();
+}
+
+// 打刻の矛盾を検出する。返り値は {date, dow, msg} の配列
+function detectPunchIssues() {
+  const issues = [];
+  const today = todayStr();
+  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  for (const p of DB.punches) {
+    const dow = ['日','月','火','水','木','金','土'][new Date(p.date).getDay()];
+    const add = msg => issues.push({ date: p.date, dow, msg });
+    // 出退勤の欠け（今日は進行中なので退勤なしは正常扱い）
+    if (p.in && !p.out) { if (p.date !== today) add('退勤が未記録'); continue; }
+    if (!p.in && p.out) { add('出勤が未記録'); continue; }
+    if (!p.in && !p.out) continue;
+    // ここから出勤・退勤とも入力あり
+    if (toMin(p.out) <= toMin(p.in)) { add('退勤が出勤より前'); continue; }
+    // 休憩のチェック
+    if ((p.breakIn && !p.breakOut) || (!p.breakIn && p.breakOut)) { add('休憩の片方が未入力'); continue; }
+    if (p.breakIn && p.breakOut) {
+      const bmins = toMin(p.breakOut) - toMin(p.breakIn);
+      if (bmins <= 0) { add('休憩の時刻が逆転'); continue; }
+      if (bmins >= toMin(p.out) - toMin(p.in)) { add('休憩が実働以上'); continue; }
+    }
+  }
+  return issues.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderPunchAlerts() {
+  const area = document.getElementById('punch-alerts');
+  if (!area) return;
+  const issues = detectPunchIssues();
+  if (!issues.length) { area.innerHTML = ''; return; }
+  const rows = issues.map(i => {
+    const [y, m, d] = i.date.split('-');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #fed7d7">
+      <span style="font-size:13px;color:#742a2a">${parseInt(m)}/${parseInt(d)}(${i.dow})</span>
+      <span style="font-size:13px;font-weight:600;color:#c53030">${i.msg}</span>
+    </div>`;
+  }).join('');
+  area.innerHTML = `<div class="card" style="background:#fff5f5;border:1px solid #feb2b2">
+    <div style="font-size:14px;font-weight:700;color:#c53030">⚠️ 打刻ミスの可能性（${issues.length}件）</div>
+    <div style="font-size:11px;color:#a0aec0;margin:4px 0 2px">下の「打刻記録」から修正できます</div>
+    ${rows}
+  </div>`;
 }
 
 function renderPunchRecords() {
