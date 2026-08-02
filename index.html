@@ -725,6 +725,27 @@
     </div>
   </div>
 
+  <!-- 週平均目標計算②（8/1以降） -->
+  <div class="card">
+    <h3>🧮 週平均キープシミュレーター②</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;color:#4a5568;white-space:nowrap">8/1以降 目標</span>
+        <input type="number" id="sim2-target-hours" min="1" max="60" step="1" value="20"
+          style="width:64px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+          oninput="calcSimulator()">
+        <span style="font-size:13px;color:#718096">h/週</span>
+        <span style="font-size:13px;color:#4a5568;white-space:nowrap">を</span>
+        <input type="date" id="sim2-target-date"
+          style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none"
+          oninput="calcSimulator()">
+        <span style="font-size:13px;color:#718096">までキープするには</span>
+        <button class="btn-primary" onclick="saveSim2Settings()" style="white-space:nowrap;padding:9px 14px">保存</button>
+      </div>
+      <div id="sim2-result" style="font-size:14px;font-weight:600;color:#4a5568"></div>
+    </div>
+  </div>
+
   <!-- サマリー -->
   <div class="leave-summary" id="leave-summary-card">
     <h3>📊 消化状況</h3>
@@ -2103,11 +2124,30 @@ function saveSimSettings() {
   showToast('シミュレーター設定を保存しました');
 }
 
+function saveSim2Settings() {
+  const h = document.getElementById('sim2-target-hours')?.value;
+  const d = document.getElementById('sim2-target-date')?.value;
+  if (!d) { showToast('日付を入力してください'); return; }
+  localStorage.setItem('wt_sim2_hours', h || '20');
+  localStorage.setItem('wt_sim2_date', d);
+  showToast('シミュレーター②設定を保存しました');
+}
+
+// 2つのシミュレーターをまとめて再計算する
 function calcSimulator() {
-  const result = document.getElementById('sim-result');
+  runSim({ hoursId: 'sim-target-hours',  dateId: 'sim-target-date',  resultId: 'sim-result',  defaultH: 30, startDate: null });
+  runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01' });
+}
+
+// startDate 以降（null なら全期間）の打刻から、targetDate までに週平均 targetH をキープするペースを計算
+function runSim(opts) {
+  const result = document.getElementById(opts.resultId);
   if (!result) return;
-  const targetH = parseInt(document.getElementById('sim-target-hours').value) || 30;
-  const targetDate = document.getElementById('sim-target-date').value;
+  const hoursEl = document.getElementById(opts.hoursId);
+  const dateEl  = document.getElementById(opts.dateId);
+  if (!hoursEl || !dateEl) return;
+  const targetH = parseInt(hoursEl.value) || opts.defaultH;
+  const targetDate = dateEl.value;
   if (!targetDate) { result.textContent = ''; return; }
 
   const now = new Date();
@@ -2122,10 +2162,16 @@ function calcSimulator() {
   const targetMon = getMon(new Date(targetDate));
   const todayMon  = getMon(new Date());
 
-  // 目標日までの打刻すべて（未来の予定入力分を含む）と、今日までの実績のみの2セット
-  const entered = DB.punches.filter(p => p.in && p.out && p.date <= targetDate);
+  const lower = opts.startDate || '0000-00-00';
+  // 集計期間内（startDate〜targetDate）の打刻すべてと、今日までの実績のみの2セット
+  const entered = DB.punches.filter(p => p.in && p.out && p.date >= lower && p.date <= targetDate);
   const actual  = entered.filter(p => p.date <= todayStr);
-  if (entered.length === 0) { result.textContent = '打刻データがありません'; return; }
+  if (entered.length === 0) {
+    result.innerHTML = opts.startDate
+      ? `<span style="color:#a0aec0">${opts.startDate.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2')}以降の打刻はまだありません</span>`
+      : '打刻データがありません';
+    return;
+  }
 
   // extraDays = 進行中の週のうち明日以降に残っている日数（0〜6）。
   // 「残り週」＝カバー済みの週より後の丸ごとの週 ＋ 進行中の週の残り日数（日割り）
@@ -2294,6 +2340,20 @@ function renderLeave() {
     } else if (!simDate.value) {
       const now = new Date();
       simDate.value = `${now.getFullYear()}-${pad(now.getMonth()+2)}-${pad(new Date(now.getFullYear(), now.getMonth()+2, 0).getDate())}`;
+    }
+  }
+  // シミュレーター②（8/1以降）の初期値
+  const sim2Date  = document.getElementById('sim2-target-date');
+  const sim2Hours = document.getElementById('sim2-target-hours');
+  if (sim2Date && !sim2Date.dataset.restored) {
+    sim2Date.dataset.restored = '1';
+    const savedH2 = localStorage.getItem('wt_sim2_hours');
+    const savedD2 = localStorage.getItem('wt_sim2_date');
+    if (savedH2 && sim2Hours) sim2Hours.value = savedH2;
+    if (savedD2) {
+      sim2Date.value = savedD2;
+    } else if (!sim2Date.value) {
+      sim2Date.value = '2026-12-31';
     }
   }
   calcSimulator();
