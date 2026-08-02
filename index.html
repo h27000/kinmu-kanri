@@ -2286,13 +2286,13 @@ function autoCalcWeeklyDays() {
   const hoursElEarly = document.getElementById('weekly-hours-display');
   if (hoursElEarly) {
     const avg1 = weekAvgRange('2026-02-01', '2026-07-31');
-    hoursElEarly.textContent = avg1 !== null ? `週平均実働（2/1〜7/31）：${minutesToHMFull(avg1)}` : '';
+    hoursElEarly.textContent = avg1 !== null ? `① 2/1〜7/31　週平均実働 ${minutesToHMFull(avg1)}` : '';
   }
   // 8/1以降
   const hoursEl2 = document.getElementById('weekly-hours-display2');
   if (hoursEl2) {
     const avg2 = weekAvgRange('2026-08-01', null);
-    hoursEl2.textContent = avg2 !== null ? `週平均実働（8/1以降）：${minutesToHMFull(avg2)}` : '';
+    hoursEl2.textContent = avg2 !== null ? `② 8/1以降　週平均実働 ${minutesToHMFull(avg2)}` : '';
   }
 
   const el = document.getElementById('weekly-days-display');
