@@ -690,7 +690,7 @@
 
   <!-- 設定 -->
   <div class="card">
-    <h3>⚙️ 有給設定</h3>
+    <h3>有給設定</h3>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <label style="font-size:13px;font-weight:600;color:#4a5568;white-space:nowrap">入社日</label>
@@ -753,7 +753,7 @@
 
   <!-- サマリー -->
   <div class="leave-summary" id="leave-summary-card">
-    <h3>📊 消化状況</h3>
+    <h3>消化状況</h3>
     <div id="leave-summary-body">
       <p class="empty-msg">入社日を設定してください</p>
     </div>
@@ -761,7 +761,7 @@
 
   <!-- 使用記録追加 -->
   <div class="card">
-    <h3>➕ 有給を使った日を記録</h3>
+    <h3>有給を使った日を記録</h3>
     <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:#718096">日付</label>
@@ -779,7 +779,7 @@
 
   <!-- 使用履歴 -->
   <div class="card">
-    <h3>📋 使用履歴</h3>
+    <h3>使用履歴</h3>
     <div id="leave-list-container">
       <p class="empty-msg">記録がありません</p>
     </div>
@@ -809,7 +809,7 @@
   <!-- カレンダー -->
   <div class="card summary-cal">
     <div class="cal-header-row">
-      <h3>📅 カレンダー</h3>
+      <h3>カレンダー</h3>
     </div>
     <div id="summary-cal-grid" class="cal-grid"></div>
     <div class="cal-legend-row">
@@ -827,7 +827,7 @@
 
   <!-- 週次サマリー（月内） -->
   <div class="card">
-    <h3>📆 週次サマリー</h3>
+    <h3>週次サマリー</h3>
     <div id="summary-weekly-container">
       <p class="empty-msg">データがありません</p>
     </div>
@@ -879,7 +879,7 @@
 
   <!-- 時給設定 -->
   <div class="card">
-    <h3>💰 時給設定</h3>
+    <h3>時給設定</h3>
     <div style="display:flex;flex-direction:column;gap:14px">
 
       <!-- 基本時給 -->
@@ -916,7 +916,7 @@
 
       <!-- 月間目標時間 -->
       <div style="border-top:1px solid #e2e8f0;padding-top:12px">
-        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">🎯 月間目標時間</div>
+        <div style="font-size:13px;font-weight:600;color:#1a202c;margin-bottom:8px">月間目標時間</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <label style="font-size:13px;color:#4a5568;white-space:nowrap">目標</label>
           <input type="number" id="target-hours" min="0" max="300" step="5" placeholder="160"
@@ -947,7 +947,7 @@
 
   <!-- クラウド同期 -->
   <div class="card">
-    <h3>☁️ クラウド同期</h3>
+    <h3>クラウド同期</h3>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="font-size:13px;color:#4a5568">GitHub Gistを使ってスマホ・PCでデータを共有できます。</div>
 
@@ -1005,7 +1005,7 @@
 
   <!-- バックアップ・復元 -->
   <div class="card">
-    <h3>💾 バックアップ・復元</h3>
+    <h3>バックアップ・復元</h3>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="font-size:13px;color:#4a5568">毎日自動でバックアップを保存します（過去7日分）。</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1316,7 +1316,7 @@ function renderTargetBar(actualMins) {
   const color = pct >= 100 ? '#AA0000' : '#a0aec0';
   area.innerHTML = `<div class="target-bar-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:12px;font-weight:600;color:#4a5568">🎯 月間目標 ${target}h</span>
+      <span style="font-size:12px;font-weight:600;color:#4a5568">月間目標 ${target}h</span>
       <span style="font-size:12px;font-weight:700;color:${color}">${pct}%　${minutesToHM(actualMins)} / ${target}h</span>
     </div>
     <div class="target-bar-track"><div class="target-bar-fill" style="width:${barW}%;background:${color}"></div></div>
@@ -1780,7 +1780,7 @@ function renderPunchAlerts() {
     </div>`;
   }).join('');
   area.innerHTML = `<div class="card" style="background:#fff5f5;border:1px solid #feb2b2">
-    <div style="font-size:14px;font-weight:700;color:#c53030">⚠️ 打刻ミスの可能性（${issues.length}件）</div>
+    <div style="font-size:14px;font-weight:700;color:#c53030">打刻ミスの可能性（${issues.length}件）</div>
     <div style="font-size:11px;color:#a0aec0;margin:4px 0 2px">下の「打刻記録」から修正できます</div>
     ${rows}
   </div>`;
