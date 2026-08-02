@@ -2271,8 +2271,10 @@ function autoCalcWeeklyDays() {
   const todayStrE = `${nowE.getFullYear()}-${pad(nowE.getMonth() + 1)}-${pad(nowE.getDate())}`;
   const getMonE = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
   // lower（含む）〜今日 の打刻から週平均実働を計算。データなしは null
-  const weekAvgFrom = lower => {
-    const ps = DB.punches.filter(p => p.in && p.out && p.date <= todayStrE && (!lower || p.date >= lower));
+  // lower〜upper（いずれも省略可）かつ今日まで の打刻から週平均実働を計算。データなしは null
+  const weekAvgRange = (lower, upper) => {
+    const ps = DB.punches.filter(p => p.in && p.out && p.date <= todayStrE
+      && (!lower || p.date >= lower) && (!upper || p.date <= upper));
     let t = 0; for (const p of ps) t += calcPunchMinutes(p);
     if (!ps.length || t <= 0) return null;
     const ds = ps.map(p => p.date).sort();
@@ -2280,16 +2282,16 @@ function autoCalcWeeklyDays() {
     return Math.round(t / wc);
   };
 
-  // 全期間（半年カウント）
+  // 2/1〜7/31
   const hoursElEarly = document.getElementById('weekly-hours-display');
   if (hoursElEarly) {
-    const avgAll = weekAvgFrom(null);
-    hoursElEarly.textContent = avgAll !== null ? `週平均実働：${minutesToHMFull(avgAll)}` : '';
+    const avg1 = weekAvgRange('2026-02-01', '2026-07-31');
+    hoursElEarly.textContent = avg1 !== null ? `週平均実働（2/1〜7/31）：${minutesToHMFull(avg1)}` : '';
   }
   // 8/1以降
   const hoursEl2 = document.getElementById('weekly-hours-display2');
   if (hoursEl2) {
-    const avg2 = weekAvgFrom('2026-08-01');
+    const avg2 = weekAvgRange('2026-08-01', null);
     hoursEl2.textContent = avg2 !== null ? `週平均実働（8/1以降）：${minutesToHMFull(avg2)}` : '';
   }
 
