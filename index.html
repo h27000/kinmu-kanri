@@ -2136,7 +2136,7 @@ function saveSim2Settings() {
 // 2つのシミュレーターをまとめて再計算する
 function calcSimulator() {
   runSim({ hoursId: 'sim-target-hours',  dateId: 'sim-target-date',  resultId: 'sim-result',  defaultH: 30, startDate: null });
-  runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01' });
+  runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01', showAvg: true });
 }
 
 // startDate 以降（null なら全期間）の打刻から、targetDate までに週平均 targetH をキープするペースを計算
@@ -2203,14 +2203,24 @@ function runSim(opts) {
   // 今週のうち明日以降に残っている日数（月曜なら6、日曜なら0）
   const daysLeftThisWeek = 6 - ((now.getDay() + 6) % 7);
 
+  // 今日までの実績から週平均実働を算出（有給設定の表示と同じ計算）
+  let avgLine = '';
+  if (opts.showAvg && actual.length) {
+    let t = 0;
+    for (const p of actual) t += calcPunchMinutes(p);
+    const aDates = actual.map(p => p.date).sort();
+    const wc = Math.round((getMon(new Date(aDates[aDates.length - 1])) - getMon(new Date(aDates[0]))) / (7 * 86400000)) + 1;
+    avgLine = `<div style="font-size:13px;color:#4a5568;margin-bottom:6px">📊 週平均実働：<strong>${minutesToHMFull(Math.round(t / wc))}</strong></div>`;
+  }
+
   const hasFuture = entered.length > actual.length;
   if (!hasFuture) {
-    result.innerHTML = buildLine(actual, todayMon, daysLeftThisWeek);
+    result.innerHTML = avgLine + buildLine(actual, todayMon, daysLeftThisWeek);
     return;
   }
   const lastMon = getMon(new Date(entered.map(p => p.date).sort()[entered.length - 1]));
   const enteredMon = lastMon > todayMon ? lastMon : todayMon;
-  result.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+  result.innerHTML = avgLine + `<div style="display:flex;flex-direction:column;gap:8px">
     <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📌 今日までの実績のみ</span>${buildLine(actual, todayMon, daysLeftThisWeek)}</div>
     <div><span style="display:block;font-size:11px;color:#718096;margin-bottom:2px">📝 入力済みの予定を含む</span>${buildLine(entered, enteredMon, 0)}</div>
   </div>`;
