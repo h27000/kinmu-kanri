@@ -714,7 +714,7 @@
 
       <!-- ① 全期間 -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-        <div style="font-size:12px;color:#718096">① 全期間</div>
+        <div style="font-size:12px;color:#718096">① 2/2〜7/31</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim-target-hours" min="1" max="60" step="1" value="30"
@@ -2140,7 +2140,7 @@ function saveSim2Settings() {
 
 // 2つのシミュレーターをまとめて再計算する
 function calcSimulator() {
-  runSim({ hoursId: 'sim-target-hours',  dateId: 'sim-target-date',  resultId: 'sim-result',  defaultH: 30, startDate: null });
+  runSim({ hoursId: 'sim-target-hours',  dateId: 'sim-target-date',  resultId: 'sim-result',  defaultH: 30, startDate: '2026-02-02' });
   runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01', showAvg: true });
 }
 
