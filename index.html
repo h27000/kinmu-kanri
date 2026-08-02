@@ -699,7 +699,32 @@
         <button class="btn-primary" onclick="saveHireDate()">保存</button>
         <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
       </div>
-      <div id="weekly-days-display" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- ① 2/1〜7/31 -->
+        <div id="days-box1" style="display:none;flex-direction:column;gap:6px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
+          <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
+          <div id="days1-summary" style="font-size:13px;color:#4a5568;font-weight:600"></div>
+        </div>
+        <!-- ② 8/1以降 -->
+        <div id="days-box2" style="display:none;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
+          <div style="font-size:12px;color:#718096">② 8/1以降</div>
+          <div id="days2-summary" style="font-size:13px;color:#4a5568;font-weight:600"></div>
+          <div id="days2-badge" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
+            <input type="number" id="days-target" min="1" max="7" step="0.5" value="4"
+              style="width:56px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+              oninput="calcDaysKeep()">
+            <span style="font-size:13px;color:#718096">日/週 を</span>
+            <input type="date" id="days-target-date"
+              style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"
+              oninput="calcDaysKeep()">
+            <span style="font-size:13px;color:#718096">までキープ</span>
+            <button class="btn-primary" onclick="saveDaysKeep()" style="white-space:nowrap;padding:8px 14px">保存</button>
+          </div>
+          <div id="days-keep-result" style="font-size:14px;color:#4a5568"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2267,8 +2292,9 @@ function autoCalcWeeklyDays() {
 
   DB.weeklyDays = days;
 
-  const el = document.getElementById('weekly-days-display');
-  if (!el) return;
+  const box1El = document.getElementById('days-box1');
+  const box2El = document.getElementById('days-box2');
+  if (!box1El || !box2El) return;
 
   const hd = DB.hireDate;
   const nextGrant = hd ? calcLeaveGrants(hd).find(g => !g.isPast) : null;
@@ -2281,33 +2307,85 @@ function autoCalcWeeklyDays() {
   const r1 = weekDaysRange('2026-02-01', '2026-07-31');
   const r2 = weekDaysRange('2026-08-01', null);
 
-  // 週4まで +何日：8/1以降（②）の実績で計算
-  let badge2 = '';
+  // ① 2/1〜7/31（データがあれば表示）
+  if (r1) {
+    box1El.style.display = 'flex';
+    document.getElementById('days1-summary').textContent = `合計${r1.total}日　週所定労働日数平均 ${r1.avg.toFixed(1)}日`;
+  } else {
+    box1El.style.display = 'none';
+  }
+
+  // ② 8/1以降（目標設定のため常に表示）
+  box2El.style.display = 'flex';
+  const sum2 = document.getElementById('days2-summary');
+  sum2.textContent = r2
+    ? `合計${r2.total}日　週所定労働日数平均 ${r2.avg.toFixed(1)}日`
+    : '8/1以降のデータはまだありません';
+
+  // 週4まで +何日（有給付与の目安・法定4日ライン）
+  const badgeEl = document.getElementById('days2-badge');
   if (r2) {
     const ds2 = [...new Set(source.filter(d => d >= '2026-08-01'))].sort();
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
-    badge2 = need4 <= 0
+    badgeEl.innerHTML = need4 <= 0
       ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4まで +${Math.abs(need4)}日${suffix}</span>`
       : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まで +${need4}日${suffix}</span>`;
+  } else {
+    badgeEl.innerHTML = '';
   }
 
-  // シミュレーターと同じグレーの囲みボックスで①②を色分け表示
-  const boxStyle = 'display:flex;flex-direction:column;gap:6px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px';
-  const capStyle = 'font-size:12px;color:#718096';
-  const valStyle = 'font-size:13px;color:#4a5568;font-weight:600';
-  const box1 = r1 ? `<div style="${boxStyle}">
-    <div style="${capStyle}">① 2/1〜7/31</div>
-    <div style="${valStyle}">合計${r1.total}日　週所定労働日数平均 ${r1.avg.toFixed(1)}日</div>
-  </div>` : '';
-  const box2 = r2 ? `<div style="${boxStyle}">
-    <div style="${capStyle}">② 8/1以降</div>
-    <div style="${valStyle}">合計${r2.total}日　週所定労働日数平均 ${r2.avg.toFixed(1)}日</div>
-    ${badge2 ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${badge2}</div>` : ''}
-  </div>` : '';
+  calcDaysKeep();
+}
 
-  el.innerHTML = box1 + box2;
+function saveDaysKeep() {
+  const d = document.getElementById('days-target-date')?.value;
+  const h = document.getElementById('days-target')?.value;
+  if (!d) { showToast('日付を入力してください'); return; }
+  localStorage.setItem('wt_days_target', h || '4');
+  localStorage.setItem('wt_days_date', d);
+  showToast('目標を保存しました');
+}
 
+// 8/1以降、目標日までに週平均◯日/週をキープするための残りペースを計算
+function calcDaysKeep() {
+  const result = document.getElementById('days-keep-result');
+  if (!result) return;
+  const targetD = parseFloat(document.getElementById('days-target').value) || 4;
+  const targetDate = document.getElementById('days-target-date').value;
+  if (!targetDate) { result.textContent = ''; return; }
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const getMon = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
+
+  const src = DB.shifts.length ? DB.shifts.map(s => s.date) : DB.punches.filter(p => p.in && p.out).map(p => p.date);
+  const worked = [...new Set(src.filter(d => d >= '2026-08-01' && d <= todayStr))].sort();
+  if (!worked.length) { result.innerHTML = `<span style="color:#a0aec0">8/1以降の勤務データはまだありません</span>`; return; }
+
+  const targetMon = getMon(new Date(targetDate));
+  const todayMon  = getMon(new Date());
+  const firstMon  = getMon(new Date(worked[0]));
+  const totalWeeks   = Math.round((targetMon - firstMon) / (7 * 86400000)) + 1;
+  const fullWeeksLeft = totalWeeks - (Math.round((todayMon - firstMon) / (7 * 86400000)) + 1);
+  const daysLeftThisWeek = 6 - ((now.getDay() + 6) % 7);
+  const capacity = Math.max(0, fullWeeksLeft) + (fullWeeksLeft >= 0 ? daysLeftThisWeek / 7 : 0);
+
+  if (capacity <= 0) {
+    const avg = worked.length / totalWeeks;
+    result.innerHTML = avg >= targetD
+      ? `<span style="color:#276749">キープ完了（週平均 ${avg.toFixed(1)}日）</span>`
+      : `<span style="color:#c53030">期間終了（週平均 ${avg.toFixed(1)}日）</span>`;
+    return;
+  }
+  const needDays = targetD * totalWeeks - worked.length;
+  if (needDays <= 0) {
+    result.innerHTML = `<span style="color:#276749">このままのペースでキープできます</span>`;
+    return;
+  }
+  const perWeek = needDays / capacity;
+  const color = perWeek > targetD ? '#c53030' : '#AA0000';
+  result.innerHTML = `残り${Math.ceil(capacity)}週、週<span style="color:${color}">${perWeek.toFixed(1)}日</span>のペースでOK`;
 }
 
 function addLeave() {
@@ -2366,7 +2444,22 @@ function renderLeave() {
       sim2Date.value = '2026-12-31';
     }
   }
+  // 目標日数（8/1以降）の初期値
+  const daysDate  = document.getElementById('days-target-date');
+  const daysHours = document.getElementById('days-target');
+  if (daysDate && !daysDate.dataset.restored) {
+    daysDate.dataset.restored = '1';
+    const savedDH = localStorage.getItem('wt_days_target');
+    const savedDD = localStorage.getItem('wt_days_date');
+    if (savedDH && daysHours) daysHours.value = savedDH;
+    if (savedDD) {
+      daysDate.value = savedDD;
+    } else if (!daysDate.value) {
+      daysDate.value = '2026-12-31';
+    }
+  }
   calcSimulator();
+  calcDaysKeep();
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
