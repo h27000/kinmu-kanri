@@ -2251,12 +2251,12 @@ function autoCalcWeeklyDays() {
     mon.setHours(0,0,0,0);
     return mon;
   };
-  // 指定範囲の週所定労働日数（1〜5日にクランプ）。データなしは null
+  // 指定範囲の合計勤務日数と週平均日数（1〜5日にクランプ）。データなしは null
   const weekDaysRange = (lower, upper) => {
     const ds = [...new Set(source.filter(d => (!lower || d >= lower) && (!upper || d <= upper)))].sort();
     if (!ds.length) return null;
     const wc = Math.round((getMonday(new Date(ds[ds.length-1])) - getMonday(new Date(ds[0]))) / (7*86400000)) + 1;
-    return Math.min(5, Math.max(1, Math.round(ds.length / wc)));
+    return { total: ds.length, avg: Math.min(5, Math.max(1, Math.round(ds.length / wc))) };
   };
 
   let days = 5, weekCount = 0;
@@ -2280,14 +2280,14 @@ function autoCalcWeeklyDays() {
     suffix = `（${g.getMonth()+1}/${g.getDate()}の付与まで）`;
   }
 
-  const d1 = weekDaysRange('2026-02-01', '2026-07-31');
-  const d2 = weekDaysRange('2026-08-01', null);
-  const line1 = d1 !== null ? `<span style="color:#4a5568;font-weight:600">① 2/1〜7/31　週所定労働日数 ${d1}日</span>` : '';
-  const line2 = d2 !== null ? `<span style="color:#4a5568;font-weight:600">② 8/1以降　週所定労働日数 ${d2}日</span>` : '';
+  const r1 = weekDaysRange('2026-02-01', '2026-07-31');
+  const r2 = weekDaysRange('2026-08-01', null);
+  const line1 = r1 ? `<span style="color:#4a5568;font-weight:600">① 2/1〜7/31　合計${r1.total}日　週所定労働日数平均 ${r1.avg}日</span>` : '';
+  const line2 = r2 ? `<span style="color:#4a5568;font-weight:600">② 8/1以降　合計${r2.total}日　週所定労働日数平均 ${r2.avg}日</span>` : '';
 
   // 週4まであと何日：8/1以降（②）の実績で計算
   let badge2 = '';
-  if (d2 !== null) {
+  if (r2) {
     const ds2 = [...new Set(source.filter(d => d >= '2026-08-01'))].sort();
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
