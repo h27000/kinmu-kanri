@@ -2329,8 +2329,8 @@ function autoCalcWeeklyDays() {
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
     badgeEl.innerHTML = need4 <= 0
-      ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4日：達成（+${Math.abs(need4)}日）</span>`
-      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4日：未達（−${need4}日）</span>`;
+      ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4日：+${Math.abs(need4)}日</span>`
+      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4日：−${need4}日</span>`;
   } else {
     badgeEl.innerHTML = '';
   }
