@@ -2259,14 +2259,12 @@ function autoCalcWeeklyDays() {
     return Math.min(5, Math.max(1, Math.round(ds.length / wc)));
   };
 
-  let days = 5, needed = 0, needed4 = 0, weekCount = 0;
+  let days = 5, weekCount = 0;
   if (dates.length > 0) {
     const firstMon = getMonday(new Date(dates[0]));
     const lastMon  = getMonday(new Date(dates[dates.length - 1]));
     weekCount = Math.round((lastMon - firstMon) / (7*86400000)) + 1;
     days    = Math.min(5, Math.max(1, Math.round(dates.length / weekCount)));
-    needed  = Math.ceil(5 * weekCount) - dates.length;
-    needed4 = Math.ceil(4 * weekCount) - dates.length;
   }
 
   DB.weeklyDays = days;
@@ -2282,27 +2280,26 @@ function autoCalcWeeklyDays() {
     suffix = `（${g.getMonth()+1}/${g.getDate()}の付与まで）`;
   }
 
-  let badges = '';
-  if (needed <= 0) {
-    badges = `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週5まで +${Math.abs(needed)}日${suffix}</span>`;
-  } else {
-    badges = `<span style="font-size:12px;background:#fff5f5;color:#c53030;border:1px solid #fed7d7;border-radius:12px;padding:2px 8px">週5まであと${needed}日${suffix}</span>`;
-  }
-  if (needed4 <= 0) {
-    badges += `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4まで +${Math.abs(needed4)}日${suffix}</span>`;
-  } else {
-    badges += `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まであと${needed4}日${suffix}</span>`;
-  }
-
   const d1 = weekDaysRange('2026-02-01', '2026-07-31');
   const d2 = weekDaysRange('2026-08-01', null);
   const line1 = d1 !== null ? `<span style="color:#4a5568;font-weight:600">① 2/1〜7/31　週所定労働日数 ${d1}日</span>` : '';
   const line2 = d2 !== null ? `<span style="color:#4a5568;font-weight:600">② 8/1以降　週所定労働日数 ${d2}日</span>` : '';
 
+  // 週4まであと何日：8/1以降（②）の実績で計算
+  let badge2 = '';
+  if (d2 !== null) {
+    const ds2 = [...new Set(source.filter(d => d >= '2026-08-01'))].sort();
+    const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
+    const need4 = Math.ceil(4 * wc2) - ds2.length;
+    badge2 = need4 <= 0
+      ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4まで +${Math.abs(need4)}日${suffix}</span>`
+      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4まであと${need4}日${suffix}</span>`;
+  }
+
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
     ${line1}
     ${line2}
-    <div style="display:flex;flex-wrap:wrap;gap:6px">${badges}</div>
+    ${badge2 ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${badge2}</div>` : ''}
   </div>`;
 
 }
