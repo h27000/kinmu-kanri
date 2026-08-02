@@ -709,7 +709,6 @@
         <div id="days-box2" style="display:none;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
           <div style="font-size:12px;color:#718096">② 8/1以降</div>
           <div id="days2-summary" style="font-size:13px;color:#4a5568;font-weight:600"></div>
-          <div id="days2-badge" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:13px;color:#4a5568;white-space:nowrap">目標</span>
             <input type="number" id="days-target" min="1" max="7" step="0.5" value="4"
@@ -723,6 +722,7 @@
             <button class="btn-primary" onclick="saveDaysKeep()" style="white-space:nowrap;padding:8px 14px">保存</button>
           </div>
           <div id="days-keep-result" style="font-size:14px;color:#4a5568"></div>
+          <div id="days2-badge" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
       </div>
     </div>
@@ -2329,8 +2329,8 @@ function autoCalcWeeklyDays() {
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
     badgeEl.innerHTML = need4 <= 0
-      ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4日ペース：達成</span>`
-      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4日ペース：未達（あと${need4}日）</span>`;
+      ? `<span style="font-size:12px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 8px">週4日：達成（+${Math.abs(need4)}日）</span>`
+      : `<span style="font-size:12px;background:#fffbeb;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 8px">週4日：未達（−${need4}日）</span>`;
   } else {
     badgeEl.innerHTML = '';
   }
