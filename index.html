@@ -2223,7 +2223,7 @@ function runSim(opts) {
     for (const p of actual) t += calcPunchMinutes(p);
     const aDates = actual.map(p => p.date).sort();
     const wc = Math.round((getMon(new Date(aDates[aDates.length - 1])) - getMon(new Date(aDates[0]))) / (7 * 86400000)) + 1;
-    avgLine = `<div style="font-size:13px;color:#4a5568;margin-bottom:6px">週平均実働：${minutesToHMFull(Math.round(t / wc))}</div>`;
+    avgLine = `<div style="font-size:14px;color:#4a5568;margin-bottom:6px">週平均実働：${minutesToHMFull(Math.round(t / wc))}</div>`;
   }
 
   const hasFuture = entered.length > actual.length;
