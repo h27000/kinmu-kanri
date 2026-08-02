@@ -2249,12 +2249,12 @@ function autoCalcWeeklyDays() {
     mon.setHours(0,0,0,0);
     return mon;
   };
-  // 指定範囲の合計勤務日数と週平均日数（1〜5日にクランプ）。データなしは null
+  // 指定範囲の合計勤務日数と週平均日数（小数）。データなしは null
   const weekDaysRange = (lower, upper) => {
     const ds = [...new Set(source.filter(d => (!lower || d >= lower) && (!upper || d <= upper)))].sort();
     if (!ds.length) return null;
     const wc = Math.round((getMonday(new Date(ds[ds.length-1])) - getMonday(new Date(ds[0]))) / (7*86400000)) + 1;
-    return { total: ds.length, avg: Math.min(5, Math.max(1, Math.round(ds.length / wc))) };
+    return { total: ds.length, avg: ds.length / wc };
   };
 
   let days = 5, weekCount = 0;
@@ -2298,11 +2298,11 @@ function autoCalcWeeklyDays() {
   const valStyle = 'font-size:13px;color:#4a5568;font-weight:600';
   const box1 = r1 ? `<div style="${boxStyle}">
     <div style="${capStyle}">① 2/1〜7/31</div>
-    <div style="${valStyle}">合計${r1.total}日　週所定労働日数平均 ${r1.avg}日</div>
+    <div style="${valStyle}">合計${r1.total}日　週所定労働日数平均 ${r1.avg.toFixed(1)}日</div>
   </div>` : '';
   const box2 = r2 ? `<div style="${boxStyle}">
     <div style="${capStyle}">② 8/1以降</div>
-    <div style="${valStyle}">合計${r2.total}日　週所定労働日数平均 ${r2.avg}日</div>
+    <div style="${valStyle}">合計${r2.total}日　週所定労働日数平均 ${r2.avg.toFixed(1)}日</div>
     ${badge2 ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${badge2}</div>` : ''}
   </div>` : '';
 
