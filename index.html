@@ -700,8 +700,6 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
         <div id="weekly-days-display" style="font-size:13px;font-weight:600;color:#4a5568"></div>
-        <div id="weekly-hours-display" style="font-size:13px;color:#4a5568"></div>
-        <div id="weekly-hours-display2" style="font-size:13px;color:#4a5568"></div>
         <div id="leave-tenure" style="font-size:12px;color:#718096"></div>
       </div>
     </div>
@@ -2265,35 +2263,6 @@ function autoCalcWeeklyDays() {
   }
 
   DB.weeklyDays = days;
-
-  // 未来日の打刻（予定入力分）は除外し、今日までの実績のみで週平均実働を出す
-  const nowE = new Date();
-  const todayStrE = `${nowE.getFullYear()}-${pad(nowE.getMonth() + 1)}-${pad(nowE.getDate())}`;
-  const getMonE = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
-  // lower（含む）〜今日 の打刻から週平均実働を計算。データなしは null
-  // lower〜upper（いずれも省略可）かつ今日まで の打刻から週平均実働を計算。データなしは null
-  const weekAvgRange = (lower, upper) => {
-    const ps = DB.punches.filter(p => p.in && p.out && p.date <= todayStrE
-      && (!lower || p.date >= lower) && (!upper || p.date <= upper));
-    let t = 0; for (const p of ps) t += calcPunchMinutes(p);
-    if (!ps.length || t <= 0) return null;
-    const ds = ps.map(p => p.date).sort();
-    const wc = Math.round((getMonE(new Date(ds[ds.length-1])) - getMonE(new Date(ds[0]))) / (7*86400000)) + 1;
-    return Math.round(t / wc);
-  };
-
-  // 2/1〜7/31
-  const hoursElEarly = document.getElementById('weekly-hours-display');
-  if (hoursElEarly) {
-    const avg1 = weekAvgRange('2026-02-01', '2026-07-31');
-    hoursElEarly.textContent = avg1 !== null ? `① 2/1〜7/31　週平均実働 ${minutesToHMFull(avg1)}` : '';
-  }
-  // 8/1以降
-  const hoursEl2 = document.getElementById('weekly-hours-display2');
-  if (hoursEl2) {
-    const avg2 = weekAvgRange('2026-08-01', null);
-    hoursEl2.textContent = avg2 !== null ? `② 8/1以降　週平均実働 ${minutesToHMFull(avg2)}` : '';
-  }
 
   const el = document.getElementById('weekly-days-display');
   if (!el) return;
