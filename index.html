@@ -703,12 +703,12 @@
       <div style="display:flex;flex-direction:column;gap:12px">
         <!-- ① 2/1〜7/31 -->
         <div id="days-box1" style="display:none;flex-direction:column;gap:6px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-          <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
+          <div id="days1-cap" style="font-size:12px;color:#718096">① 2/1〜7/31</div>
           <div id="days1-summary" style="font-size:14px;color:#4a5568;font-weight:600"></div>
         </div>
         <!-- ② 8/1以降 -->
         <div id="days-box2" style="display:none;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-          <div style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
+          <div id="days2-cap" style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
             <input type="number" id="days-target" min="1" max="7" step="0.5" value="4"
@@ -737,14 +737,14 @@
 
       <!-- ① 2/1〜7/31（確定・目標週30時間） -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-        <div style="font-size:12px;color:#718096">① 2/1〜7/31</div>
+        <div id="sim1-cap" style="font-size:12px;color:#718096">① 2/1〜7/31</div>
         <div style="font-size:14px;color:#4a5568">目標 週30時間をキープ</div>
         <div id="sim-result" style="font-size:14px;color:#4a5568"></div>
       </div>
 
       <!-- ② 8/1以降 -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-        <div style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
+        <div id="sim2-cap" style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim2-target-hours" min="1" max="60" step="1" value="20"
@@ -2066,6 +2066,28 @@ function calcLeaveGrants(hireDate) {
   });
 }
 
+// 入社日から①②のカウント期間を算出（①=入社〜1回目付与の前日、②=1回目付与〜2回目付与の前日）
+function getLeavePeriods() {
+  const hd = DB.hireDate;
+  if (!hd) return null;
+  const grants = calcLeaveGrants(hd);
+  if (grants.length < 2) return null;
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const dayBefore = d => { const x = new Date(d); x.setDate(x.getDate()-1); return x; };
+  return {
+    p1start: fmt(new Date(hd)),
+    p1end:   fmt(dayBefore(grants[0].grantDate)),
+    p2start: fmt(grants[0].grantDate),
+    p2end:   fmt(dayBefore(grants[1].grantDate)),
+  };
+}
+// 期間ラベル：同年なら M/D〜M/D、年をまたぐなら YYYY/M/D〜YYYY/M/D
+function periodLabel(start, end) {
+  const part = (s, withYear) => { const [y,m,d] = s.split('-'); return withYear ? `${y}/${parseInt(m)}/${parseInt(d)}` : `${parseInt(m)}/${parseInt(d)}`; };
+  const sameYear = start.slice(0,4) === end.slice(0,4);
+  return sameYear ? `${part(start,false)}〜${part(end,false)}` : `${part(start,true)}〜${part(end,true)}`;
+}
+
 function calcTotalGranted(hireDate) {
   const grants = calcLeaveGrants(hireDate).filter(g => g.isPast);
   if (!grants.length) return 0;
@@ -2083,8 +2105,19 @@ function saveSim2Settings() {
 
 // 2つのシミュレーターをまとめて再計算する
 function calcSimulator() {
-  runSim({ resultId: 'sim-result', fixedH: 30, fixedDate: '2026-07-31', startDate: '2026-02-01' });
-  runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: '2026-08-01', showAvg: true });
+  const P = getLeavePeriods();
+  const p1start = P ? P.p1start : '2026-02-01';
+  const p1end   = P ? P.p1end   : '2026-07-31';
+  const p2start = P ? P.p2start : '2026-08-01';
+  const p2end   = P ? P.p2end   : '2027-07-31';
+  if (P) {
+    const c1 = document.getElementById('sim1-cap');
+    const c2 = document.getElementById('sim2-cap');
+    if (c1) c1.textContent = `① ${periodLabel(p1start, p1end)}`;
+    if (c2) c2.textContent = `② ${periodLabel(p2start, p2end)}`;
+  }
+  runSim({ resultId: 'sim-result', fixedH: 30, fixedDate: p1end, startDate: p1start });
+  runSim({ hoursId: 'sim2-target-hours', dateId: 'sim2-target-date', resultId: 'sim2-result', defaultH: 20, startDate: p2start, showAvg: true });
 }
 
 // startDate 以降（null なら全期間）の打刻から、targetDate までに週平均 targetH をキープするペースを計算
@@ -2233,10 +2266,17 @@ function autoCalcWeeklyDays() {
     suffix = `（${g.getMonth()+1}/${g.getDate()}の付与まで）`;
   }
 
-  const r1 = weekDaysRange('2026-02-01', '2026-07-31');
-  const r2 = weekDaysRange('2026-08-01', '2027-07-31');
+  const P = getLeavePeriods();
+  if (!P) { box1El.style.display = 'none'; box2El.style.display = 'none'; return; }
 
-  // ① 2/1〜7/31（データがあれば表示）
+  // 入社日ベースの期間ラベルを反映
+  document.getElementById('days1-cap').textContent = `① ${periodLabel(P.p1start, P.p1end)}`;
+  document.getElementById('days2-cap').textContent = `② ${periodLabel(P.p2start, P.p2end)}`;
+
+  const r1 = weekDaysRange(P.p1start, P.p1end);
+  const r2 = weekDaysRange(P.p2start, P.p2end);
+
+  // ①（データがあれば表示）
   if (r1) {
     box1El.style.display = 'flex';
     document.getElementById('days1-summary').textContent = `合計${r1.total}日　週所定労働日数平均 ${r1.avg.toFixed(1)}日`;
@@ -2244,17 +2284,17 @@ function autoCalcWeeklyDays() {
     box1El.style.display = 'none';
   }
 
-  // ② 8/1以降（目標設定のため常に表示）
+  // ②（目標設定のため常に表示）
   box2El.style.display = 'flex';
   const sum2 = document.getElementById('days2-summary');
   sum2.textContent = r2
     ? `合計${r2.total}日　週所定労働日数平均 ${r2.avg.toFixed(1)}日`
-    : '8/1以降のデータはまだありません';
+    : 'この期間の勤務データはまだありません';
 
-  // 週4まで +何日（有給付与の目安・法定4日ライン）
+  // 週4日ライン（有給付与の目安・法定4日ライン）
   const badgeEl = document.getElementById('days2-badge');
   if (r2) {
-    const ds2 = [...new Set(source.filter(d => d >= '2026-08-01' && d <= '2027-07-31'))].sort();
+    const ds2 = [...new Set(source.filter(d => d >= P.p2start && d <= P.p2end))].sort();
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
     badgeEl.innerHTML = need4 <= 0
@@ -2288,9 +2328,12 @@ function calcDaysKeep() {
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const getMon = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
 
+  const P = getLeavePeriods();
+  const lo = P ? P.p2start : '2026-08-01';
+  const hi = P ? P.p2end   : '2027-07-31';
   const src = DB.shifts.length ? DB.shifts.map(s => s.date) : DB.punches.filter(p => p.in && p.out).map(p => p.date);
-  const worked = [...new Set(src.filter(d => d >= '2026-08-01' && d <= '2027-07-31' && d <= todayStr))].sort();
-  if (!worked.length) { result.innerHTML = `<span style="color:#a0aec0">8/1以降の勤務データはまだありません</span>`; return; }
+  const worked = [...new Set(src.filter(d => d >= lo && d <= hi && d <= todayStr))].sort();
+  if (!worked.length) { result.innerHTML = `<span style="color:#a0aec0">この期間の勤務データはまだありません</span>`; return; }
 
   const targetMon = getMon(new Date(targetDate));
   const todayMon  = getMon(new Date());
@@ -2344,7 +2387,10 @@ function renderLeave() {
   const hd = DB.hireDate;
   if (hd) document.getElementById('hire-date').value = hd;
   autoCalcWeeklyDays();
-  // シミュレーター②（8/1以降）の初期値
+  // 目標日の初期値は②期間の終わり（入社日ベース）。未算出なら年末
+  const P = getLeavePeriods();
+  const defaultTargetDate = P ? P.p2end : '2026-12-31';
+  // 週平均カウント②の初期値
   const sim2Date  = document.getElementById('sim2-target-date');
   const sim2Hours = document.getElementById('sim2-target-hours');
   if (sim2Date && !sim2Date.dataset.restored) {
@@ -2355,10 +2401,10 @@ function renderLeave() {
     if (savedD2) {
       sim2Date.value = savedD2;
     } else if (!sim2Date.value) {
-      sim2Date.value = '2026-12-31';
+      sim2Date.value = defaultTargetDate;
     }
   }
-  // 目標日数（8/1以降）の初期値
+  // 有給カウント②の目標日数の初期値
   const daysDate  = document.getElementById('days-target-date');
   const daysHours = document.getElementById('days-target');
   if (daysDate && !daysDate.dataset.restored) {
@@ -2369,7 +2415,7 @@ function renderLeave() {
     if (savedDD) {
       daysDate.value = savedDD;
     } else if (!daysDate.value) {
-      daysDate.value = '2026-12-31';
+      daysDate.value = defaultTargetDate;
     }
   }
   calcSimulator();
