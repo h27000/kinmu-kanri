@@ -723,6 +723,15 @@
           </div>
           <div id="days2-summary" style="font-size:14px;color:#4a5568"></div>
           <div id="days-keep-result" style="font-size:14px;color:#4a5568"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid #edf2f7;padding-top:8px">
+            <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
+            <input type="number" id="annual-target" min="1" max="366" step="1" value="169"
+              style="width:64px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff"
+              oninput="calcAnnualDays()">
+            <span style="font-size:14px;color:#718096">日/年</span>
+            <button class="btn-primary" onclick="saveAnnualDays()" style="white-space:nowrap;padding:8px 14px">保存</button>
+          </div>
+          <div id="annual-days-result" style="font-size:14px;color:#4a5568"></div>
           <div id="days2-badge" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
       </div>
@@ -2305,6 +2314,7 @@ function autoCalcWeeklyDays() {
   }
 
   calcDaysKeep();
+  calcAnnualDays();
 }
 
 function saveDaysKeep() {
@@ -2358,6 +2368,50 @@ function calcDaysKeep() {
   const perWeek = needDays / capacity;
   const color = perWeek > targetD ? '#c53030' : '#AA0000';
   result.innerHTML = `残り${Math.ceil(capacity)}週、週<span style="color:${color}">${perWeek.toFixed(1)}日</span>のペースでOK`;
+}
+
+function saveAnnualDays() {
+  const v = document.getElementById('annual-target')?.value;
+  localStorage.setItem('wt_annual_target', v || '169');
+  showToast('目標を保存しました');
+}
+
+// ②の1年間で目標の総勤務日数（例：年169日）に到達するための残り日数・週ペースを計算
+function calcAnnualDays() {
+  const result = document.getElementById('annual-days-result');
+  if (!result) return;
+  const target = parseInt(document.getElementById('annual-target').value) || 169;
+  const P = getLeavePeriods();
+  const lo = P ? P.p2start : '2026-08-01';
+  const hi = P ? P.p2end   : '2027-07-31';
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const getMon = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
+
+  const src = DB.shifts.length ? DB.shifts.map(s => s.date) : DB.punches.filter(p => p.in && p.out).map(p => p.date);
+  const done = [...new Set(src.filter(d => d >= lo && d <= hi && d <= todayStr))].length;
+  const remain = target - done;
+
+  if (remain <= 0) {
+    result.innerHTML = `<span style="color:#276749">年間${target}日 達成済み（${done}日）</span>`;
+    return;
+  }
+
+  // 今日から②期間末（hi）までの残り週数（今週の残り日数を日割り）
+  const hiMon = getMon(new Date(hi));
+  const todayMon = getMon(new Date());
+  const fullWeeksLeft = Math.round((hiMon - todayMon) / (7 * 86400000));
+  const daysLeftThisWeek = 6 - ((now.getDay() + 6) % 7);
+  const capacity = Math.max(0, fullWeeksLeft) + (fullWeeksLeft >= 0 ? daysLeftThisWeek / 7 : 0);
+
+  if (capacity <= 0) {
+    result.innerHTML = `<span style="color:#c53030">期間終了（${done}日 / 目標${target}日）</span>`;
+    return;
+  }
+  const perWeek = remain / capacity;
+  const color = perWeek > 7 ? '#c53030' : '#AA0000';
+  result.innerHTML = `年間${target}日まで あと<strong>${remain}日</strong>（現在${done}日）、残り${Math.ceil(capacity)}週・週<span style="color:${color}">${perWeek.toFixed(1)}日</span>ペースでOK`;
 }
 
 function addLeave() {
@@ -2418,8 +2472,16 @@ function renderLeave() {
       daysDate.value = defaultTargetDate;
     }
   }
+  // 年間目標日数の復元
+  const annualEl = document.getElementById('annual-target');
+  if (annualEl && !annualEl.dataset.restored) {
+    annualEl.dataset.restored = '1';
+    const savedAT = localStorage.getItem('wt_annual_target');
+    if (savedAT) annualEl.value = savedAT;
+  }
   calcSimulator();
   calcDaysKeep();
+  calcAnnualDays();
 
   // 勤続情報
   const tenureEl = document.getElementById('leave-tenure');
