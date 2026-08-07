@@ -708,7 +708,7 @@
         </div>
         <!-- ② 8/1以降 -->
         <div id="days-box2" style="display:none;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-          <div style="font-size:12px;color:#718096">② 8/1以降</div>
+          <div style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
             <input type="number" id="days-target" min="1" max="7" step="0.5" value="4"
@@ -744,7 +744,7 @@
 
       <!-- ② 8/1以降 -->
       <div style="display:flex;flex-direction:column;gap:8px;background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:12px">
-        <div style="font-size:12px;color:#718096">② 8/1以降</div>
+        <div style="font-size:12px;color:#718096">② 2026/8/1〜2027/7/31</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:14px;color:#4a5568;white-space:nowrap">目標</span>
           <input type="number" id="sim2-target-hours" min="1" max="60" step="1" value="20"
@@ -2234,7 +2234,7 @@ function autoCalcWeeklyDays() {
   }
 
   const r1 = weekDaysRange('2026-02-01', '2026-07-31');
-  const r2 = weekDaysRange('2026-08-01', null);
+  const r2 = weekDaysRange('2026-08-01', '2027-07-31');
 
   // ① 2/1〜7/31（データがあれば表示）
   if (r1) {
@@ -2254,7 +2254,7 @@ function autoCalcWeeklyDays() {
   // 週4まで +何日（有給付与の目安・法定4日ライン）
   const badgeEl = document.getElementById('days2-badge');
   if (r2) {
-    const ds2 = [...new Set(source.filter(d => d >= '2026-08-01'))].sort();
+    const ds2 = [...new Set(source.filter(d => d >= '2026-08-01' && d <= '2027-07-31'))].sort();
     const wc2 = Math.round((getMonday(new Date(ds2[ds2.length-1])) - getMonday(new Date(ds2[0]))) / (7*86400000)) + 1;
     const need4 = Math.ceil(4 * wc2) - ds2.length;
     badgeEl.innerHTML = need4 <= 0
@@ -2289,7 +2289,7 @@ function calcDaysKeep() {
   const getMon = d => { const day=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); mon.setHours(0,0,0,0); return mon; };
 
   const src = DB.shifts.length ? DB.shifts.map(s => s.date) : DB.punches.filter(p => p.in && p.out).map(p => p.date);
-  const worked = [...new Set(src.filter(d => d >= '2026-08-01' && d <= todayStr))].sort();
+  const worked = [...new Set(src.filter(d => d >= '2026-08-01' && d <= '2027-07-31' && d <= todayStr))].sort();
   if (!worked.length) { result.innerHTML = `<span style="color:#a0aec0">8/1以降の勤務データはまだありません</span>`; return; }
 
   const targetMon = getMon(new Date(targetDate));
