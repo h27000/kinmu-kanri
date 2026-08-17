@@ -2802,10 +2802,12 @@ function renderSummary() {
   document.getElementById('stat-actual').textContent    = minutesToHM(totalActual);
   document.getElementById('stat-planned').textContent   = minutesToHMShort(totalPlanned);
   document.getElementById('stat-days').textContent      = workedDays;
-  // 週平均出勤日数: その月の日数を7で割った週数で割る（端の半端な週に振り回されない）
+  // 週平均出勤日数: シフトのある日数を、月の日数÷7の週数で割る（シフトがなければ打刻ベース）
   const [sy, sm] = ym.split('-').map(Number);
   const daysInMonth = new Date(sy, sm, 0).getDate();
-  const statAvgVal = daysInMonth > 0 ? workedDays / (daysInMonth / 7) : 0;
+  const shiftDayCount = new Set(shifts.map(s => s.date)).size;
+  const avgBaseDays = shifts.length ? shiftDayCount : workedDays;
+  const statAvgVal = daysInMonth > 0 ? avgBaseDays / (daysInMonth / 7) : 0;
   document.getElementById('stat-avg').textContent = statAvgVal % 1 === 0 ? String(statAvgVal) : statAvgVal.toFixed(1);
   document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
   document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
