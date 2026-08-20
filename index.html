@@ -3067,6 +3067,8 @@ const savedRate = DB.hourlyRate;
 if (savedRate) document.getElementById('hourly-rate').value = savedRate;
 const savedTransport = DB.transportFee;
 if (savedTransport) document.getElementById('transport-fee').value = savedTransport;
+const savedTargetInit = DB.targetHours;
+if (savedTargetInit) document.getElementById('target-hours').value = savedTargetInit;
 // 月別時給の月を今月にデフォルト設定
 document.getElementById('wage-month').value = todayStr().substring(0, 7);
 updateWageDisplay();
@@ -3120,6 +3122,13 @@ async function autoPull() {
     renderSummary();
     renderAnnual();
     renderLeave();
+    // 設定タブの入力欄にも受信値を反映
+    const pr = DB.hourlyRate;   if (pr) document.getElementById('hourly-rate').value = pr;
+    const pt = DB.transportFee; if (pt) document.getElementById('transport-fee').value = pt;
+    const pg = DB.targetHours;  if (pg) document.getElementById('target-hours').value = pg;
+    updateWageDisplay();
+    updateTransportDisplay();
+    renderMonthlyRatesList();
     const status = document.getElementById('sync-status');
     if (status) status.textContent = '✅ 自動同期済み ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
   }
