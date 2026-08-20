@@ -1355,7 +1355,10 @@ function renderTargetBar(actualMins) {
   const area = document.getElementById('target-bar-area');
   if (!area) return;
   const target = DB.targetHours;
-  if (!target) { area.innerHTML = ''; return; }
+  if (!target) {
+    area.innerHTML = `<div style="font-size:12px;color:#a0aec0">月間目標は未設定です（設定タブで入力）</div>`;
+    return;
+  }
   const targetMins = target * 60;
   const pct = Math.round(actualMins / targetMins * 100);
   const barW = Math.min(100, pct);
@@ -1480,12 +1483,20 @@ async function syncNow() {
   }
   const ok = await SYNC.pull();
   if (ok) {
-    if (status) status.textContent = '✅ 同期完了 ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+    const th = DB.targetHours;
+    if (status) status.textContent = `✅ 同期完了 ${new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'})}（月間目標 ${th ? th + 'h' : '未設定'}）`;
     refreshPunchUI();
     renderShiftList();
     renderSummary();
     renderAnnual();
     renderLeave();
+    // 設定タブの入力欄にも受信値を反映
+    const sr = DB.hourlyRate;   if (sr) document.getElementById('hourly-rate').value = sr;
+    const st = DB.transportFee; if (st) document.getElementById('transport-fee').value = st;
+    if (th) document.getElementById('target-hours').value = th;
+    updateWageDisplay();
+    updateTransportDisplay();
+    renderMonthlyRatesList();
     showToast('同期完了しました');
   } else {
     if (status) status.innerHTML = '❌ 同期失敗<br><span style="font-size:11px">APIキーかネット接続を確認してください</span>';
