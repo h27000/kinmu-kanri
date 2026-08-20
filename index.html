@@ -1072,6 +1072,27 @@ const DB = {
   // 月間目標時間（時間単位）
   get targetHours() { return parseInt(localStorage.getItem('wt_target_hours') || '0'); },
   set targetHours(v) { localStorage.setItem('wt_target_hours', String(v)); },
+  // シミュレーター系の目標設定（同期・バックアップ用にまとめて扱う）
+  get simSettings() {
+    const o = {};
+    for (const k of ['wt_sim2_hours','wt_sim2_date','wt_days_target','wt_days_date','wt_annual_target']) {
+      const v = localStorage.getItem(k);
+      if (v !== null) o[k] = v;
+    }
+    return o;
+  },
+  set simSettings(o) {
+    if (!o || typeof o !== 'object') return;
+    const map = { wt_sim2_hours:'sim2-target-hours', wt_sim2_date:'sim2-target-date',
+                  wt_days_target:'days-target', wt_days_date:'days-target-date',
+                  wt_annual_target:'annual-target' };
+    for (const k of Object.keys(map)) {
+      if (o[k] === undefined) continue;
+      localStorage.setItem(k, String(o[k]));
+      const el = document.getElementById(map[k]);
+      if (el) el.value = o[k]; // 画面の入力欄にも即反映
+    }
+  },
   // 有給管理
   get hireDate()    { return localStorage.getItem('wt_hire_date') || ''; },
   set hireDate(v)   { localStorage.setItem('wt_hire_date', v); },
@@ -1117,6 +1138,7 @@ const SYNC = {
         punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
         hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
         hireDate: DB.hireDate, leaveUsed: DB.leaveUsed, targetHours: DB.targetHours,
+        simSettings: DB.simSettings,
       });
       const res = await fetch(this.BASE, {
         method: 'POST',
@@ -1154,6 +1176,7 @@ const SYNC = {
       if (data.hireDate)   localStorage.setItem('wt_hire_date',   data.hireDate);
       if (Array.isArray(data.leaveUsed)) localStorage.setItem('wt_leave_used', JSON.stringify(data.leaveUsed));
       if (data.targetHours !== undefined) localStorage.setItem('wt_target_hours', String(data.targetHours));
+      if (data.simSettings) DB.simSettings = data.simSettings;
       return true;
     } catch(e) { console.warn('pull failed:', e); return false; }
   },
@@ -1170,6 +1193,7 @@ const SYNC = {
           punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
           hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
           hireDate: DB.hireDate, leaveUsed: DB.leaveUsed, targetHours: DB.targetHours,
+          simSettings: DB.simSettings,
         }) } },
       }),
     }).catch(e => console.warn('push failed:', e));
@@ -1478,7 +1502,7 @@ function saveAutoBackup() {
     punches: DB.punches, shifts: DB.shifts,
     hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates,
     transportFee: DB.transportFee, hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
-    targetHours: DB.targetHours,
+    targetHours: DB.targetHours, simSettings: DB.simSettings,
   });
   localStorage.setItem(AUTO_BACKUP_PREFIX + today, data);
   // 古いバックアップを削除（7日より前）
@@ -1523,6 +1547,8 @@ function restoreAutoBackup(key) {
   if (d.transportFee !== undefined) DB.transportFee = d.transportFee;
   if (d.hireDate)    DB.hireDate   = d.hireDate;
   if (Array.isArray(d.leaveUsed)) DB.leaveUsed = d.leaveUsed;
+  if (d.targetHours !== undefined) DB.targetHours = d.targetHours;
+  if (d.simSettings) DB.simSettings = d.simSettings;
   SYNC.push();
   refreshPunchUI();
   renderShiftList();
@@ -1546,6 +1572,7 @@ function exportBackup() {
     hireDate:     DB.hireDate,
     leaveUsed:    DB.leaveUsed,
     targetHours:  DB.targetHours,
+    simSettings:  DB.simSettings,
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1576,6 +1603,7 @@ function importBackup(event) {
       if (data.hireDate)                DB.hireDate     = data.hireDate;
       if (Array.isArray(data.leaveUsed)) DB.leaveUsed   = data.leaveUsed;
       if (data.targetHours !== undefined) DB.targetHours = data.targetHours;
+      if (data.simSettings)             DB.simSettings  = data.simSettings;
       // UI更新
       const savedRate = DB.hourlyRate;
       if (savedRate) document.getElementById('hourly-rate').value = savedRate;
