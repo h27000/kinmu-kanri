@@ -1347,6 +1347,7 @@ function updateTransportDisplay() {
 function saveTargetHours() {
   const val = parseInt(document.getElementById('target-hours').value) || 0;
   DB.targetHours = val;
+  SYNC.push();
   renderSummary();
 }
 
@@ -2145,6 +2146,7 @@ function saveSim2Settings() {
   if (!d) { showToast('日付を入力してください'); return; }
   localStorage.setItem('wt_sim2_hours', h || '20');
   localStorage.setItem('wt_sim2_date', d);
+  SYNC.push();
   showToast('シミュレーター②設定を保存しました');
 }
 
@@ -2359,6 +2361,7 @@ function saveDaysKeep() {
   if (!d) { showToast('日付を入力してください'); return; }
   localStorage.setItem('wt_days_target', h || '4');
   localStorage.setItem('wt_days_date', d);
+  SYNC.push();
   showToast('目標を保存しました');
 }
 
@@ -2409,6 +2412,7 @@ function calcDaysKeep() {
 function saveAnnualDays() {
   const v = document.getElementById('annual-target')?.value;
   localStorage.setItem('wt_annual_target', v || '169');
+  SYNC.push();
   showToast('目標を保存しました');
 }
 
@@ -3115,6 +3119,7 @@ async function autoPull() {
     renderShiftList();
     renderSummary();
     renderAnnual();
+    renderLeave();
     const status = document.getElementById('sync-status');
     if (status) status.textContent = '✅ 自動同期済み ' + new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
   }
