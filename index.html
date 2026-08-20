@@ -1116,7 +1116,7 @@ const SYNC = {
       const currentData = JSON.stringify({
         punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
         hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
-        hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+        hireDate: DB.hireDate, leaveUsed: DB.leaveUsed, targetHours: DB.targetHours,
       });
       const res = await fetch(this.BASE, {
         method: 'POST',
@@ -1153,6 +1153,7 @@ const SYNC = {
       if (data.transportFee !== undefined) localStorage.setItem('wt_transport_fee', String(data.transportFee));
       if (data.hireDate)   localStorage.setItem('wt_hire_date',   data.hireDate);
       if (Array.isArray(data.leaveUsed)) localStorage.setItem('wt_leave_used', JSON.stringify(data.leaveUsed));
+      if (data.targetHours !== undefined) localStorage.setItem('wt_target_hours', String(data.targetHours));
       return true;
     } catch(e) { console.warn('pull failed:', e); return false; }
   },
@@ -1168,7 +1169,7 @@ const SYNC = {
         files: { 'timekeeper-data.json': { content: JSON.stringify({
           punches: DB.punches, shifts: DB.shifts, hourlyRate: DB.hourlyRate,
           hourlyRates: DB.hourlyRates, transportFee: DB.transportFee,
-          hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+          hireDate: DB.hireDate, leaveUsed: DB.leaveUsed, targetHours: DB.targetHours,
         }) } },
       }),
     }).catch(e => console.warn('push failed:', e));
@@ -1477,6 +1478,7 @@ function saveAutoBackup() {
     punches: DB.punches, shifts: DB.shifts,
     hourlyRate: DB.hourlyRate, hourlyRates: DB.hourlyRates,
     transportFee: DB.transportFee, hireDate: DB.hireDate, leaveUsed: DB.leaveUsed,
+    targetHours: DB.targetHours,
   });
   localStorage.setItem(AUTO_BACKUP_PREFIX + today, data);
   // 古いバックアップを削除（7日より前）
@@ -1543,6 +1545,7 @@ function exportBackup() {
     transportFee: DB.transportFee,
     hireDate:     DB.hireDate,
     leaveUsed:    DB.leaveUsed,
+    targetHours:  DB.targetHours,
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1570,6 +1573,9 @@ function importBackup(event) {
       if (data.hourlyRate !== undefined) DB.hourlyRate   = data.hourlyRate;
       if (data.hourlyRates)             DB.hourlyRates  = data.hourlyRates;
       if (data.transportFee !== undefined) DB.transportFee = data.transportFee;
+      if (data.hireDate)                DB.hireDate     = data.hireDate;
+      if (Array.isArray(data.leaveUsed)) DB.leaveUsed   = data.leaveUsed;
+      if (data.targetHours !== undefined) DB.targetHours = data.targetHours;
       // UI更新
       const savedRate = DB.hourlyRate;
       if (savedRate) document.getElementById('hourly-rate').value = savedRate;
