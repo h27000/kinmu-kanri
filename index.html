@@ -1674,7 +1674,7 @@ function deletePunch(date) {
 }
 
 // ---- 時刻セレクト生成（時・分 別々）----
-function makeTimeSelect(id, value, style = '') {
+function makeTimeSelect(id, value, style = '', defaultM = null) {
   const [curH, curM] = value ? value.split(':').map(Number) : [null, null];
 
   // 時セレクト（0〜26時）
@@ -1685,11 +1685,11 @@ function makeTimeSelect(id, value, style = '') {
     hOpts += `<option value="${h}" ${sel}>${label}</option>`;
   }
 
-  // 分セレクト（00〜59分）
+  // 分セレクト（00〜59分）。値がなければ defaultM を初期選択
   let mOpts = `<option value="">--</option>`;
   for (let m = 0; m < 60; m++) {
     const mm = String(m).padStart(2, '0');
-    const sel = curM === m ? 'selected' : '';
+    const sel = (curM === m || (curM === null && m === defaultM)) ? 'selected' : '';
     mOpts += `<option value="${mm}" ${sel}>${mm}</option>`;
   }
 
@@ -1835,11 +1835,11 @@ function renderPunchRecords() {
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">出</span>
-              ${makeTimeSelect(`edit-in-${p.date}`, p.in ?? '')}
+              ${makeTimeSelect(`edit-in-${p.date}`, p.in ?? '', '', 50)}
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">退</span>
-              ${makeTimeSelect(`edit-out-${p.date}`, p.out ?? '')}
+              ${makeTimeSelect(`edit-out-${p.date}`, p.out ?? '', '', 10)}
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">休</span>
