@@ -822,10 +822,9 @@
   <!-- 実績と予定の比較 -->
   <div id="actual-plan-compare" class="stats-grid compare-grid"></div>
 
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">
     <div class="stat-box"><div class="label">週平均出勤</div><div class="value" id="stat-avg">--</div><div class="unit">日/週</div></div>
     <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
-    <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
   </div>
 
   <!-- 目標時間バー -->
@@ -2912,7 +2911,7 @@ function renderSummary() {
   const avgBaseDays = shifts.length ? shiftDayCount : workedDays;
   const statAvgVal = daysInMonth > 0 ? avgBaseDays / (daysInMonth / 7) : 0;
   document.getElementById('stat-avg').textContent = statAvgVal % 1 === 0 ? String(statAvgVal) : statAvgVal.toFixed(1);
-  document.getElementById('stat-wage').textContent      = totalWage !== null ? totalWage.toLocaleString() : '--';
+  // 月間給与は「打刻」の箱で表示
   document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
   // 目標時間バー
