@@ -313,8 +313,8 @@
   .stat-box .unit { font-size: 12px; color: #718096; }
   .stat-box.highlight { background: #fff5f5; border: 1px solid #fed7d7; }
   .stat-box.highlight .value { color: #1a202c; }
-  /* 実績と予定の比較（2列） */
-  .compare-grid { grid-template-columns: repeat(2, 1fr); }
+  /* 実績と予定＋統計（4箱を1列に） */
+  .compare-grid { grid-template-columns: repeat(4, 1fr); }
 
   /* 週次サマリー */
   .week-card {
@@ -592,10 +592,13 @@
     .punch-status { font-size: 13px; padding: 8px 12px; }
     .form-row { flex-direction: column; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
-    .compare-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .compare-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .stat-box { padding: 10px; }
     .stat-box .value { font-size: 18px; }
-    .compare-grid .unit { font-size: 11px; }
+    .compare-grid .stat-box { padding: 10px 4px; }
+    .compare-grid .value { font-size: 14px; }
+    .compare-grid .unit { font-size: 10px; }
+    .compare-grid .label { font-size: 10px; }
     table { font-size: 12px; }
     th, td { padding: 6px 5px; }
     th { white-space: nowrap; }
@@ -819,13 +822,8 @@
     <button class="btn-primary" onclick="exportCSV()">CSV出力</button>
   </div>
 
-  <!-- 実績と予定の比較 -->
+  <!-- 打刻・シフト・週平均出勤・交通費の4箱を1列に -->
   <div id="actual-plan-compare" class="stats-grid compare-grid"></div>
-
-  <div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">
-    <div class="stat-box"><div class="label">週平均出勤</div><div class="value" id="stat-avg">--</div><div class="unit">日/週</div></div>
-    <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
-  </div>
 
   <!-- 目標時間バー -->
   <div id="target-bar-area"></div>
@@ -1380,7 +1378,7 @@ function renderTargetBar(actualMins) {
 }
 
 // 実績（打刻）と予定（シフト）を並べて比較表示
-function renderActualPlanCompare(ym, days, sortedDates) {
+function renderActualPlanCompare(ym, days, sortedDates, extra) {
   const area = document.getElementById('actual-plan-compare');
   if (!area) return;
 
@@ -1420,9 +1418,21 @@ function renderActualPlanCompare(ym, days, sortedDates) {
       <div style="font-size:14px;font-weight:600;color:#1a202c;margin-top:4px">${hasRate ? fmtWage(wage) : '-'}</div>
     </div>`;
 
+  // 単一の値だけを表示する箱（週平均出勤・交通費用）
+  const simpleBox = (label, value, unit) => `
+    <div class="stat-box">
+      <div class="label">${label}</div>
+      <div class="value-row">
+        <span class="value">${value}</span>
+        <span class="unit">${unit}</span>
+      </div>
+    </div>`;
+
   area.innerHTML =
     box('打刻', actualMins, actualDays, actualWage, hasActualRate, true) +
-    box('シフト', planMins, planDays, planWage, hasPlanRate, false);
+    box('シフト', planMins, planDays, planWage, hasPlanRate, false) +
+    simpleBox('週平均出勤', extra.avg, '日/週') +
+    simpleBox('交通費合計', extra.transport, '円');
 }
 
 function renderMonthlyRatesList() {
@@ -2910,15 +2920,14 @@ function renderSummary() {
   const shiftDayCount = new Set(shifts.map(s => s.date)).size;
   const avgBaseDays = shifts.length ? shiftDayCount : workedDays;
   const statAvgVal = daysInMonth > 0 ? avgBaseDays / (daysInMonth / 7) : 0;
-  document.getElementById('stat-avg').textContent = statAvgVal % 1 === 0 ? String(statAvgVal) : statAvgVal.toFixed(1);
-  // 月間給与は「打刻」の箱で表示
-  document.getElementById('stat-transport').textContent = totalTransport !== null ? totalTransport.toLocaleString() : '--';
+  const statAvgText = statAvgVal % 1 === 0 ? String(statAvgVal) : statAvgVal.toFixed(1);
+  const statTransText = totalTransport !== null ? totalTransport.toLocaleString() : '--';
 
   // 目標時間バー
   renderTargetBar(totalActual);
 
   // 実績と予定の比較
-  renderActualPlanCompare(ym, days, sortedDates);
+  renderActualPlanCompare(ym, days, sortedDates, { avg: statAvgText, transport: statTransText });
 
   // カレンダー描画
   renderSummaryCalendar(ym, days);
