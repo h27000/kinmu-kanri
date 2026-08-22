@@ -819,10 +819,7 @@
     <button class="btn-primary" onclick="exportCSV()">CSV出力</button>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-box"><div class="label">実労働時間</div><div class="value" id="stat-actual">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">予定時間</div><div class="value" id="stat-planned">--</div><div class="unit">時間</div></div>
-    <div class="stat-box"><div class="label">出勤日数</div><div class="value" id="stat-days">--</div><div class="unit">日</div></div>
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="stat-box"><div class="label">週平均出勤</div><div class="value" id="stat-avg">--</div><div class="unit">日/週</div></div>
     <div class="stat-box"><div class="label">交通費合計</div><div class="value" id="stat-transport">--</div><div class="unit">円</div></div>
     <div class="stat-box highlight"><div class="label">月間給与</div><div class="value" id="stat-wage">--</div><div class="unit">円</div></div>
@@ -2907,9 +2904,7 @@ function renderSummary() {
 
   const totalTransport = DB.transportFee > 0 ? DB.transportFee * workedDays : null;
 
-  document.getElementById('stat-actual').textContent    = minutesToHM(totalActual);
-  document.getElementById('stat-planned').textContent   = minutesToHMShort(totalPlanned);
-  document.getElementById('stat-days').textContent      = workedDays;
+  // 実働時間・予定時間・出勤日数は「実績と予定」カードで表示
   // 週平均出勤日数: シフトのある日数を、月の日数÷7の週数で割る（シフトがなければ打刻ベース）
   const [sy, sm] = ym.split('-').map(Number);
   const daysInMonth = new Date(sy, sm, 0).getDate();
