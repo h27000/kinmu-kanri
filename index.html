@@ -830,7 +830,6 @@
   <!-- 実績と予定の比較 -->
   <div class="card">
     <h3>実績と予定</h3>
-    <div style="font-size:12px;color:#a0aec0;margin-bottom:10px">実績は打刻・予定はシフトから集計</div>
     <div id="actual-plan-compare"></div>
   </div>
 
@@ -1424,35 +1423,22 @@ function renderActualPlanCompare(ym, days, sortedDates) {
   const sign = n => n > 0 ? '+' : '';
   const diffColor = n => n === 0 ? '#718096' : (n > 0 ? '#276749' : '#c53030');
 
-  const row = (label, actual, plan) => `
-    <tr>
-      <td style="color:#718096;white-space:nowrap">${label}</td>
-      <td style="text-align:right;font-weight:600">${actual}</td>
-      <td style="text-align:right;color:#4a5568">${plan}</td>
-    </tr>`;
+  const line = (label, actual, plan, diff) => `
+    <div style="display:flex;align-items:baseline;gap:6px;font-size:13px;padding:3px 0">
+      <span style="color:#718096;width:52px;flex-shrink:0">${label}</span>
+      <span style="font-weight:600;color:#1a202c">${actual}</span>
+      <span style="color:#a0aec0">/ ${plan}</span>
+      ${diff ? `<span style="margin-left:auto;font-size:12px;color:${diff.color}">${diff.text}</span>` : ''}
+    </div>`;
 
   area.innerHTML = `
-    <table style="width:100%">
-      <thead>
-        <tr>
-          <th></th>
-          <th style="text-align:right">実績（打刻）</th>
-          <th style="text-align:right">予定（シフト）</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${row('勤務時間', minutesToHM(actualMins), minutesToHM(planMins))}
-        ${row('勤務日数', `${actualDays}日`, `${planDays}日`)}
-        ${row('給与', hasActualRate ? fmtWage(actualWage) : '-', hasPlanRate ? fmtWage(planWage) : '-')}
-        ${transport > 0 ? row('交通費', fmtWage(actualTransport), fmtWage(planTransport)) : ''}
-        ${row('合計', actualTotal !== null ? fmtWage(actualTotal) : '-', planTotal !== null ? fmtWage(planTotal) : '-')}
-      </tbody>
-    </table>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:13px">
-      <span style="color:#718096">予定との差：</span>
-      <span style="color:${diffColor(diffMins)};font-weight:600">${sign(diffMins)}${minutesToHMFull(diffMins)}</span>
-      ${diffWage !== null ? `<span style="color:${diffColor(diffWage)};font-weight:600">${diffWage < 0 ? '-' : sign(diffWage)}${fmtWage(Math.abs(diffWage))}</span>` : ''}
-    </div>`;
+    <div style="font-size:11px;color:#a0aec0;margin-bottom:2px">実績 / 予定</div>
+    ${line('時間', minutesToHM(actualMins), minutesToHM(planMins),
+      { color: diffColor(diffMins), text: `${sign(diffMins)}${minutesToHMFull(diffMins)}` })}
+    ${line('日数', `${actualDays}日`, `${planDays}日`,
+      { color: diffColor(actualDays - planDays), text: `${sign(actualDays - planDays)}${actualDays - planDays}日` })}
+    ${line('合計', actualTotal !== null ? fmtWage(actualTotal) : '-', planTotal !== null ? fmtWage(planTotal) : '-',
+      diffWage !== null ? { color: diffColor(diffWage), text: `${diffWage < 0 ? '-' : sign(diffWage)}${fmtWage(Math.abs(diffWage))}` } : null)}`;
 }
 
 function renderMonthlyRatesList() {
