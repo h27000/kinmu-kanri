@@ -827,6 +827,13 @@
   <!-- 目標時間バー -->
   <div id="target-bar-area"></div>
 
+  <!-- 実績と予定の比較 -->
+  <div class="card">
+    <h3>実績と予定</h3>
+    <div style="font-size:12px;color:#a0aec0;margin-bottom:10px">実績は打刻・予定はシフトから集計</div>
+    <div id="actual-plan-compare"></div>
+  </div>
+
   <!-- カレンダー -->
   <div class="card summary-cal">
     <div class="cal-header-row">
@@ -1374,6 +1381,78 @@ function renderTargetBar(actualMins) {
     </div>
     <div class="target-bar-track"><div class="target-bar-fill" style="width:${barW}%;background:${color}"></div></div>
   </div>`;
+}
+
+// 実績（打刻）と予定（シフト）を並べて比較表示
+function renderActualPlanCompare(ym, days, sortedDates) {
+  const area = document.getElementById('actual-plan-compare');
+  if (!area) return;
+
+  let actualMins = 0, actualDays = 0, actualWage = 0, hasActualRate = false;
+  let planMins = 0, planDays = 0, planWage = 0, hasPlanRate = false;
+
+  for (const date of sortedDates) {
+    const p = days[date].punch;
+    if (p) {
+      const mins = calcPunchMinutes(p);
+      if (mins > 0) {
+        actualMins += mins; actualDays++;
+        const w = calcWage(mins, date.substring(0, 7));
+        if (w !== null) { actualWage += w; hasActualRate = true; }
+      }
+    }
+    const shifts = days[date].shifts || [];
+    if (shifts.length) {
+      const mins = shifts.reduce((a, s) => a + s.work, 0);
+      if (mins > 0) {
+        planMins += mins; planDays++;
+        // シフトも1日単位で計算（8時間超の割増を正しく反映）
+        const w = calcWage(mins, date.substring(0, 7));
+        if (w !== null) { planWage += w; hasPlanRate = true; }
+      }
+    }
+  }
+
+  const transport = DB.transportFee;
+  const actualTransport = transport > 0 ? transport * actualDays : null;
+  const planTransport   = transport > 0 ? transport * planDays   : null;
+  const actualTotal = hasActualRate ? actualWage + (actualTransport || 0) : null;
+  const planTotal   = hasPlanRate   ? planWage   + (planTransport   || 0) : null;
+
+  const diffMins = actualMins - planMins;
+  const diffWage = (actualTotal !== null && planTotal !== null) ? actualTotal - planTotal : null;
+  const sign = n => n > 0 ? '+' : '';
+  const diffColor = n => n === 0 ? '#718096' : (n > 0 ? '#276749' : '#c53030');
+
+  const row = (label, actual, plan) => `
+    <tr>
+      <td style="color:#718096;white-space:nowrap">${label}</td>
+      <td style="text-align:right;font-weight:600">${actual}</td>
+      <td style="text-align:right;color:#4a5568">${plan}</td>
+    </tr>`;
+
+  area.innerHTML = `
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th></th>
+          <th style="text-align:right">実績（打刻）</th>
+          <th style="text-align:right">予定（シフト）</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${row('勤務時間', minutesToHM(actualMins), minutesToHM(planMins))}
+        ${row('勤務日数', `${actualDays}日`, `${planDays}日`)}
+        ${row('給与', hasActualRate ? fmtWage(actualWage) : '-', hasPlanRate ? fmtWage(planWage) : '-')}
+        ${transport > 0 ? row('交通費', fmtWage(actualTransport), fmtWage(planTransport)) : ''}
+        ${row('合計', actualTotal !== null ? fmtWage(actualTotal) : '-', planTotal !== null ? fmtWage(planTotal) : '-')}
+      </tbody>
+    </table>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:13px">
+      <span style="color:#718096">予定との差：</span>
+      <span style="color:${diffColor(diffMins)};font-weight:600">${sign(diffMins)}${minutesToHMFull(diffMins)}</span>
+      ${diffWage !== null ? `<span style="color:${diffColor(diffWage)};font-weight:600">${diffWage < 0 ? '-' : sign(diffWage)}${fmtWage(Math.abs(diffWage))}</span>` : ''}
+    </div>`;
 }
 
 function renderMonthlyRatesList() {
@@ -2869,6 +2948,9 @@ function renderSummary() {
 
   // 目標時間バー
   renderTargetBar(totalActual);
+
+  // 実績と予定の比較
+  renderActualPlanCompare(ym, days, sortedDates);
 
   // カレンダー描画
   renderSummaryCalendar(ym, days);
