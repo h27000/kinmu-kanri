@@ -1422,8 +1422,8 @@ function renderActualPlanCompare(ym, days, sortedDates) {
     </div>`;
 
   area.innerHTML =
-    box('実績（打刻）', actualMins, actualDays, actualWage, hasActualRate, true) +
-    box('予定（シフト）', planMins, planDays, planWage, hasPlanRate, false);
+    box('打刻', actualMins, actualDays, actualWage, hasActualRate, true) +
+    box('シフト', planMins, planDays, planWage, hasPlanRate, false);
 }
 
 function renderMonthlyRatesList() {
