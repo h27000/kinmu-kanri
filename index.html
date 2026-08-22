@@ -313,8 +313,8 @@
   .stat-box .unit { font-size: 12px; color: #718096; }
   .stat-box.highlight { background: #fff5f5; border: 1px solid #fed7d7; }
   .stat-box.highlight .value { color: #1a202c; }
-  /* 実績と予定の比較（常に3列） */
-  .compare-grid { grid-template-columns: repeat(3, 1fr); }
+  /* 実績と予定の比較（2列） */
+  .compare-grid { grid-template-columns: repeat(2, 1fr); }
 
   /* 週次サマリー */
   .week-card {
@@ -592,11 +592,9 @@
     .punch-status { font-size: 13px; padding: 8px 12px; }
     .form-row { flex-direction: column; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
-    .compare-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .compare-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat-box { padding: 10px; }
     .stat-box .value { font-size: 18px; }
-    .compare-grid .stat-box { padding: 10px 6px; }
-    .compare-grid .value { font-size: 15px; }
     .compare-grid .unit { font-size: 11px; }
     table { font-size: 12px; }
     th, td { padding: 6px 5px; }
@@ -1415,36 +1413,20 @@ function renderActualPlanCompare(ym, days, sortedDates) {
     }
   }
 
-  const transport = DB.transportFee;
-  const actualTransport = transport > 0 ? transport * actualDays : null;
-  const planTransport   = transport > 0 ? transport * planDays   : null;
-  const actualTotal = hasActualRate ? actualWage + (actualTransport || 0) : null;
-  const planTotal   = hasPlanRate   ? planWage   + (planTransport   || 0) : null;
-
-  const diffMins = actualMins - planMins;
-  const diffWage = (actualTotal !== null && planTotal !== null) ? actualTotal - planTotal : null;
-  const sign = n => n > 0 ? '+' : '';
-  const diffColor = n => n === 0 ? '#718096' : (n > 0 ? '#276749' : '#c53030');
-
-  // 上のstat-boxと同じ丸い箱で「実績 / 予定」を表示
-  const box = (label, actual, plan, diff, small) => `
-    <div class="stat-box">
+  // 実績・予定をそれぞれ1つの箱にまとめる（交通費は含めない）
+  const box = (label, mins, days, wage, hasRate, highlight) => `
+    <div class="stat-box${highlight ? ' highlight' : ''}">
       <div class="label">${label}</div>
       <div class="value-row">
-        <span class="value"${small ? ' style="font-size:16px"' : ''}>${actual}</span>
-        <span class="unit">/ ${plan}</span>
+        <span class="value">${minutesToHM(mins)}</span>
+        <span class="unit">時間 / ${days}日</span>
       </div>
-      ${diff ? `<div style="font-size:11px;font-weight:600;color:${diff.color};margin-top:4px">${diff.text}</div>` : ''}
+      <div style="font-size:14px;font-weight:600;color:#1a202c;margin-top:4px">${hasRate ? fmtWage(wage) : '-'}</div>
     </div>`;
 
-  const diffDays = actualDays - planDays;
   area.innerHTML =
-    box('勤務時間', minutesToHM(actualMins), minutesToHM(planMins),
-      { color: diffColor(diffMins), text: `${sign(diffMins)}${minutesToHMFull(diffMins)}` }) +
-    box('勤務日数', actualDays, `${planDays}日`,
-      { color: diffColor(diffDays), text: `${sign(diffDays)}${diffDays}日` }) +
-    box('給与＋交通費', actualTotal !== null ? fmtWage(actualTotal) : '-', planTotal !== null ? fmtWage(planTotal) : '-',
-      diffWage !== null ? { color: diffColor(diffWage), text: `${diffWage < 0 ? '-' : sign(diffWage)}${fmtWage(Math.abs(diffWage))}` } : null, true);
+    box('実績（打刻）', actualMins, actualDays, actualWage, hasActualRate, true) +
+    box('予定（シフト）', planMins, planDays, planWage, hasPlanRate, false);
 }
 
 function renderMonthlyRatesList() {
