@@ -902,20 +902,11 @@
     <h3>時給設定</h3>
     <div style="display:flex;flex-direction:column;gap:14px">
 
-      <!-- 基本時給 -->
+      <!-- 計算ルール -->
       <div>
-        <div style="font-size:12px;color:#718096;margin-bottom:6px">基本時給（月別設定がない月に使用）</div>
-        <div class="wage-setting" style="margin:0">
-          <label>時給</label>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:15px;color:#4a5568">¥</span>
-            <input type="number" id="hourly-rate" min="0" max="99999" step="10" placeholder="1000" oninput="saveWage()">
-            <span style="font-size:13px;color:#718096">/ 時間</span>
-          </div>
-        </div>
-        <div class="wage-display" id="wage-display"></div>
-        <div style="font-size:12px;color:#1a202c;margin-top:4px">⏱ 8時間超は時給×1.25で計算</div>
-        <button onclick="resetFutureRates()" style="margin-top:10px;padding:8px 14px;background:#fff5f5;border:1px solid #fc8181;color:#c53030;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">今月以降の月別設定を削除して基本時給を適用</button>
+        <div style="font-size:12px;color:#1a202c">⏱ 8時間超は時給×1.25で計算</div>
+        <div style="font-size:12px;color:#718096;margin-top:4px">月別設定がない月は、その月より前で一番近い設定を使います</div>
+        <button onclick="resetFutureRates()" style="margin-top:10px;padding:8px 14px;background:#fff5f5;border:1px solid #fc8181;color:#c53030;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">今月以降の月別設定を削除</button>
       </div>
 
       <!-- 交通費 -->
@@ -1063,7 +1054,7 @@ const DB = {
   set punches(v) { localStorage.setItem('wt_punches', JSON.stringify(v)); },
   get shifts() { return JSON.parse(localStorage.getItem('wt_shifts') || '[]'); },
   set shifts(v) { localStorage.setItem('wt_shifts', JSON.stringify(v)); },
-  // 基本時給（デフォルト）
+  // 基本時給（廃止・同期互換のため保持）
   get hourlyRate() { return parseInt(localStorage.getItem('wt_hourly_rate') || '0'); },
   set hourlyRate(v) { localStorage.setItem('wt_hourly_rate', String(v)); },
   // 交通費（1日あたり）
@@ -1103,11 +1094,18 @@ const DB = {
   // 月別時給 { "2026-01": 1100, "2026-03": 1200, ... }
   get hourlyRates() { return JSON.parse(localStorage.getItem('wt_hourly_rates') || '{}'); },
   set hourlyRates(v) { localStorage.setItem('wt_hourly_rates', JSON.stringify(v)); },
-  // ym (例: "2026-04") の時給を返す。月別設定 → 基本時給 の順でフォールバック
+  // ym (例: "2026-04") の時給を返す。未設定の月は、その月より前で一番近い設定を引き継ぐ
   getRate(ym) {
-    if (!ym) return this.hourlyRate;
     const rates = this.hourlyRates;
-    return rates[ym] ?? this.hourlyRate;
+    if (!ym) {
+      // 月の指定がなければ、設定済みで最も新しい月の時給を使う
+      const months = Object.keys(rates).sort();
+      return months.length ? rates[months[months.length - 1]] : 0;
+    }
+    if (rates[ym] !== undefined) return rates[ym];
+    // 未登録の月は、その月より前で一番近い設定を引き継ぐ
+    const past = Object.keys(rates).filter(k => k <= ym).sort();
+    return past.length ? rates[past[past.length - 1]] : 0;
   },
 };
 
@@ -1225,7 +1223,7 @@ function todayStr() {
 }
 // ym = "2026-04" 形式。省略時はデフォルト時給を使用
 function calcWage(mins, ym) {
-  const rate = ym ? DB.getRate(ym) : DB.hourlyRate;
+  const rate = DB.getRate(ym);
   if (!rate || mins <= 0) return null;
   const OVERTIME_THRESHOLD = 480; // 8時間 = 480分
   const normalMins = Math.min(mins, OVERTIME_THRESHOLD);
@@ -1265,24 +1263,8 @@ function switchTab(name, btn) {
 }
 
 // ---- 時給設定 ----
-function saveWage() {
-  const val = parseInt(document.getElementById('hourly-rate').value) || 0;
-  DB.hourlyRate = val;
-  SYNC.push();
-  updateWageDisplay();
-  renderPunchRecords();
-}
-
+// 基本時給は廃止。時給は月別設定のみで決まる（未設定月は直近の設定を引き継ぐ）
 function updateWageDisplay() {
-  const rate = DB.hourlyRate;
-  const disp = document.getElementById('wage-display');
-  if (rate) {
-    const normal = fmtWage(rate * 8);
-    const over1h = fmtWage(Math.floor(rate * 1.25));
-    disp.textContent = `8h勤務: ${normal}　残業1hあたり: ${over1h}`;
-  } else {
-    disp.textContent = '';
-  }
   renderMonthlyRatesList();
 }
 
@@ -1325,7 +1307,7 @@ function resetFutureRates() {
   renderMonthlyRatesList();
   renderSummary();
   renderAnnual();
-  showToast(`今月以降の月別設定を削除しました（基本時給が適用されます）`);
+  showToast(`今月以降の月別設定を削除しました`);
 }
 
 // ---- 交通費設定 ----
@@ -1439,7 +1421,7 @@ function renderMonthlyRatesList() {
   const rates = DB.hourlyRates;
   const entries = Object.entries(rates).sort((a, b) => b[0].localeCompare(a[0]));
   if (!entries.length) {
-    container.innerHTML = '<div style="font-size:12px;color:#a0aec0">月別設定なし（基本時給を使用）</div>';
+    container.innerHTML = '<div style="font-size:12px;color:#a0aec0">時給が未設定です。月と金額を入れて「設定」を押してください</div>';
     return;
   }
   container.innerHTML = entries.map(([ym, rate]) => {
@@ -1552,7 +1534,6 @@ async function syncNow() {
     renderAnnual();
     renderLeave();
     // 設定タブの入力欄にも受信値を反映
-    const sr = DB.hourlyRate;   if (sr) document.getElementById('hourly-rate').value = sr;
     const st = DB.transportFee; if (st) document.getElementById('transport-fee').value = st;
     if (th) document.getElementById('target-hours').value = th;
     updateWageDisplay();
@@ -1678,8 +1659,6 @@ function importBackup(event) {
       if (data.targetHours !== undefined) DB.targetHours = data.targetHours;
       if (data.simSettings)             DB.simSettings  = data.simSettings;
       // UI更新
-      const savedRate = DB.hourlyRate;
-      if (savedRate) document.getElementById('hourly-rate').value = savedRate;
       const savedTrans = DB.transportFee;
       if (savedTrans) document.getElementById('transport-fee').value = savedTrans;
       const savedTarget = DB.targetHours;
@@ -1931,7 +1910,7 @@ function renderPunchRecords() {
   const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
   if (!punches.length) { container.innerHTML = '<p class="empty-msg">記録がありません</p>'; return; }
 
-  const hasWage = DB.hourlyRate > 0 || Object.keys(DB.hourlyRates).length > 0;
+  const hasWage = Object.keys(DB.hourlyRates).length > 0;
   let html = `<table><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>実働</th>${hasWage ? '<th>給与</th>' : ''}<th></th></tr></thead><tbody>`;
 
   for (const p of punches) {
@@ -2736,7 +2715,7 @@ function renderSummaryWeekly(ym) {
 
   const weeks = [...weekStarts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   const DOW = ['日','月','火','水','木','金','土'];
-  const hasWage  = DB.hourlyRate > 0 || Object.keys(DB.hourlyRates).length > 0;
+  const hasWage  = Object.keys(DB.hourlyRates).length > 0;
   const hasTrans = DB.transportFee > 0;
   const todayStr2 = todayStr();
 
@@ -3149,8 +3128,6 @@ function exportAnnualCSV() {
 // ---- 初期化 ----
 document.getElementById('shift-date').value = todayStr();
 document.getElementById('leave-date').value  = todayStr();
-const savedRate = DB.hourlyRate;
-if (savedRate) document.getElementById('hourly-rate').value = savedRate;
 const savedTransport = DB.transportFee;
 if (savedTransport) document.getElementById('transport-fee').value = savedTransport;
 const savedTargetInit = DB.targetHours;
@@ -3211,7 +3188,6 @@ async function autoPull() {
     renderAnnual();
     renderLeave();
     // 設定タブの入力欄にも受信値を反映
-    const pr = DB.hourlyRate;   if (pr) document.getElementById('hourly-rate').value = pr;
     const pt = DB.transportFee; if (pt) document.getElementById('transport-fee').value = pt;
     const pg = DB.targetHours;  if (pg) document.getElementById('target-hours').value = pg;
     updateWageDisplay();
