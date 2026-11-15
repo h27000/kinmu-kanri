@@ -1967,6 +1967,7 @@ function renderPunchRecords() {
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn-sm btn-save" onclick="saveEditPunch('${p.date}')" style="flex:1;padding:10px;font-size:14px">保存</button>
+              <button class="btn-sm" onclick="cancelEditPunch()" style="flex:1;padding:10px;font-size:14px;background:#edf2f7;color:#4a5568;border:1px solid #e2e8f0">閉じる</button>
               <button class="btn-sm btn-danger" onclick="deletePunch('${p.date}')" style="flex:1;padding:10px;font-size:14px">削除</button>
             </div>
           </div>
@@ -2032,6 +2033,7 @@ function autoFillBreak() {
 }
 
 function onShiftMonthChange() {
+  editingShiftId = null; // 月を切り替えるときは編集フォームを閉じる
   renderShiftList();
   const ym = document.getElementById('shift-month')?.value;
   if (!ym) return;
@@ -2118,6 +2120,8 @@ function saveEditShift(id) {
 
 function renderShiftList() {
   const container = document.getElementById('shift-list-container');
+  // 同じシフトの編集フォームを開いている間は作り直さない（入力中の値が消えるのを防ぐ）
+  if (editingShiftId && document.getElementById(`es-start-${editingShiftId}`)) return;
   const ym = document.getElementById('shift-month')?.value || '';
   const allShifts = [...DB.shifts].sort((a, b) => a.date.localeCompare(b.date));
   const shifts = ym ? allShifts.filter(s => s.date.startsWith(ym)) : allShifts;
@@ -2143,6 +2147,7 @@ function renderShiftList() {
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn-sm btn-save" style="flex:1;padding:10px;font-size:14px" onclick="saveEditShift(${s.id})">保存</button>
+            <button class="btn-sm" style="flex:1;padding:10px;font-size:14px;background:#edf2f7;color:#4a5568;border:1px solid #e2e8f0" onclick="cancelEditShift()">閉じる</button>
             <button class="btn-sm btn-danger" style="flex:1;padding:10px;font-size:14px" onclick="deleteShift(${s.id})">削除</button>
           </div>
         </td>
