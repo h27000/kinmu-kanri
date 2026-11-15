@@ -640,7 +640,7 @@
   <!-- 打刻記録 -->
   <div class="card">
     <div class="summary-header" style="margin-bottom:12px">
-      <select id="punch-month" onchange="renderPunchRecords()"></select>
+      <select id="punch-month" onchange="onPunchMonthChange()"></select>
     </div>
     <div id="punch-records-container">
       <p class="empty-msg">記録がありません</p>
@@ -1825,6 +1825,12 @@ function startEditPunch(date) {
   renderPunchRecords();
 }
 
+// 月を切り替えるときは編集フォームを閉じてから再描画する
+function onPunchMonthChange() {
+  editingDate = null;
+  renderPunchRecords();
+}
+
 function cancelEditPunch() {
   editingDate = null;
   renderPunchRecords();
@@ -1917,6 +1923,9 @@ function renderPunchAlerts() {
 
 function renderPunchRecords() {
   const container = document.getElementById('punch-records-container');
+  // 同じ記録の編集フォームを開いている間は作り直さない
+  // （自動同期などの裏側の再描画で、入力中の値や日付が消えるのを防ぐ）
+  if (editingDate && document.getElementById(`edit-date-${editingDate}`)) return;
   const ym = document.getElementById('punch-month')?.value || '';
   const allPunches = [...DB.punches].sort((a, b) => a.date.localeCompare(b.date));
   const punches = ym ? allPunches.filter(p => p.date.startsWith(ym)) : allPunches;
@@ -1944,11 +1953,11 @@ function renderPunchRecords() {
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">出</span>
-              ${makeTimeSelect(`edit-in-${p.date}`, p.in ?? '', '', 50, true)}
+              ${makeTimeSelect(`edit-in-${p.date}`, p.in ?? '', '', 50)}
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">退</span>
-              ${makeTimeSelect(`edit-out-${p.date}`, p.out ?? '', '', 10, true)}
+              ${makeTimeSelect(`edit-out-${p.date}`, p.out ?? '', '', 10)}
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;font-weight:600;color:#718096;width:24px;flex-shrink:0">休</span>
